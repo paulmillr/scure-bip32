@@ -81,17 +81,6 @@ but it's backed by this package's primitives, and has built-in TypeScript types.
 Its only difference is that it has to be be used with a named import.
 The implementation is [loosely based on hdkey, which has MIT License](#LICENSE).
 
-```js
-const { HDKey } = require("micro-bip32");
-const { hexToBytes } = require("@noble/hashes/utils");
-
-const seed = "fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a29f9c999693908d8a8784817e7b7875726f6c696663605d5a5754514e4b484542";
-const hdkey = HDKey.fromMasterSeed(hexToBytes(seed));
-const childkey = hdkey.derive("m/0/2147483647'/1");
-
-console.log(childkey.privateExtendedKey);
-```
-
 ## License
 
 [MIT License](./LICENSE)
