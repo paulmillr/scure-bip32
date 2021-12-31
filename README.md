@@ -1,6 +1,6 @@
 # micro-bip32
 
-Create BIP32 hierarchical deterministic wallets ("HD Wallets") with minimum dependencies.
+Create BIP32 hierarchical deterministic (HD) wallets with minimum dependencies.
 
 Developed for, and then extracted from
 [js-ethereum-cryptography](https://github.com/ethereum/js-ethereum-cryptography). The source code is the same,
