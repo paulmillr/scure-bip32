@@ -1,7 +1,7 @@
 {
   "name": "micro-bip32",
   "version": "0.1.0",
-  "description": "Create BIP32 hierarchical deterministic (HD) wallets with minimum dependencies",
+  "description": "Audited & minimal implementation of BIP32 hierarchical deterministic (HD) wallets",
   "main": "index.js",
   "files": [
     "index.js",
@@ -11,7 +11,7 @@
   ],
   "dependencies": {
     "@noble/hashes": "^0.5.7",
-    "@noble/secp256k1": "^1.3.4",
+    "@noble/secp256k1": "~1.4.0",
     "micro-base": "^0.10.1"
   },
   "contributors": [
@@ -45,6 +45,6 @@
   "devDependencies": {
     "@types/mocha": "^9.0.0",
     "mocha": "^9.1.3",
-    "typescript": "^4.5.4"
+    "typescript": "4.5.4"
   }
 }
