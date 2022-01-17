@@ -5,9 +5,7 @@
   "main": "index.js",
   "files": [
     "index.js",
-    "index.d.ts",
-    "secp256k1.js",
-    "secp256k1.d.ts"
+    "index.d.ts"
   ],
   "dependencies": {
     "@noble/hashes": "^0.5.7",

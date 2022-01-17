@@ -14,8 +14,6 @@
     "declaration": true,
     "declarationMap": false
   },
-  "include": [
-    "src"
-  ],
+  "include": ["index.ts"],
   "exclude": ["node_modules", "./*.d.ts", "./test/*.d.ts"]
 }
