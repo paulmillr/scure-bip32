@@ -4,3 +4,4 @@
 /secp256k1.d.ts
 /test/*.js
 /test/*.d.ts
+/test/test/
