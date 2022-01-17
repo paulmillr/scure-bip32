@@ -1,28 +1,38 @@
-# micro-bip32
+# scure-bip32
 
-Audited & minimal implementation of BIP32 hierarchical deterministic (HD) wallets.
+Secure, audited & minimal implementation of BIP32 hierarchical deterministic (HD) wallets.
 
-Developed for, and then extracted from
-[js-ethereum-cryptography](https://github.com/ethereum/js-ethereum-cryptography). The source code is the same,
-the files have been copied for convenience.
+Developed for
+[js-ethereum-cryptography](https://github.com/ethereum/js-ethereum-cryptography).
+Check out [bip39](https://github.com/paulmillr/scure-bip39) if you need mnemonic phrases.
 
-Check out [micro-bip39](https://github.com/paulmillr/micro-bip39) if you need
-mnemonic phrases.
+The library has been audited by Cure53 on Jan 5, 2022. Check out the audit [PDF](./audit/2022-01-05-cure53-audit-nbl2.pdf) & [URL](https://cure53.de/pentest-report_hashing-libs.pdf). Before the audit it was called `micro-bip32`.
 
-The library has been audited by Cure53 on Jan 5, 2022. Check out the audit [PDF](./audit/2022-01-05-cure53-audit-nbl2.pdf) & [URL](https://cure53.de/pentest-report_hashing-libs.pdf).
+### This library belongs to *scure*
+
+> **scure** — secure audited packages for every use case.
+
+- Independent security audits
+- All releases are signed with PGP keys
+- Check out all libraries:
+  [base](https://github.com/paulmillr/scure-base),
+  [bip32](https://github.com/paulmillr/scure-bip32),
+  [bip39](https://github.com/paulmillr/scure-bip39)
 
 ## Usage
 
-> npm install micro-bip32
+> npm install @scure/bip32
 
-Or, `yarn add micro-bip32`
+Or
+
+> yarn add @scure/bip32
 
 ## API
 
 This module exports a single class `HDKey`, which should be used like this:
 
 ```ts
-const { HDKey } = require("micro-bip32");
+const { HDKey } = require("@scure/bip32");
 const hdkey1 = HDKey.fromMasterSeed(seed);
 const hdkey2 = HDKey.fromExtendedKey(base58key);
 const hdkey3 = HDKey.fromJSON({ xpriv: string });
@@ -87,4 +97,4 @@ The implementation is [loosely based on hdkey, which has MIT License](#LICENSE).
 
 [MIT License](./LICENSE)
 
-Copyright (c) 2021 Patricio Palladino, Paul Miller, ethereum-cryptography contributors
+Copyright (c) 2022 Patricio Palladino, Paul Miller, ethereum-cryptography contributors
