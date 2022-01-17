@@ -43,6 +43,7 @@
     "bip-32",
     "bip39",
     "micro",
+    "scure",
     "mnemonic",
     "phrase",
     "code"

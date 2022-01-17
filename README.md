@@ -4,7 +4,7 @@ Secure, audited & minimal implementation of BIP32 hierarchical deterministic (HD
 
 Developed for
 [js-ethereum-cryptography](https://github.com/ethereum/js-ethereum-cryptography).
-Check out [bip39](https://github.com/paulmillr/scure-bip39) if you need mnemonic phrases.
+Check out [scure-bip39](https://github.com/paulmillr/scure-bip39) if you need mnemonic phrases.
 
 The library has been audited by Cure53 on Jan 5, 2022. Check out the audit [PDF](./audit/2022-01-05-cure53-audit-nbl2.pdf) & [URL](https://cure53.de/pentest-report_hashing-libs.pdf). Before the audit it was called `micro-bip32`.
 
@@ -97,4 +97,4 @@ The implementation is [loosely based on hdkey, which has MIT License](#LICENSE).
 
 [MIT License](./LICENSE)
 
-Copyright (c) 2022 Patricio Palladino, Paul Miller, ethereum-cryptography contributors
+Copyright (c) 2022 Patricio Palladino, Paul Miller (paulmillr.com)
