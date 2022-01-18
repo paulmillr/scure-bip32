@@ -15,7 +15,7 @@
     "declarationMap": false
   },
   "include": [
-    "."
+    "*.ts"
   ],
   "exclude": ["node_modules", "./*.d.ts", "./test/*.d.ts"]
 }

@@ -36,7 +36,7 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc",
-    "test": "cd test && tsc && mocha hdkey.test.js"
+    "test": "cd test && tsc && mocha"
   },
   "keywords": [
     "bip32",
