@@ -54,5 +54,11 @@
     "mnemonic",
     "phrase",
     "code"
+  ],
+  "funding": [
+    {
+      "type": "individual",
+      "url": "https://paulmillr.com/funding/"
+    }
   ]
 }
