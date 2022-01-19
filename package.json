@@ -40,7 +40,7 @@
     "build": "tsc",
     "lint": "prettier --check 'index.ts' 'test/**/*.{js,ts}'",
     "format": "prettier --write 'index.ts' 'test/**/*.{js,ts}'",
-    "test": "cd test && tsc && mocha"
+    "test": "cd test && tsc && mocha hdkey.test.js"
   },
   "keywords": [
     "bip32",
