@@ -11,8 +11,8 @@ import {
   hexToBytes,
   utf8ToBytes,
 } from '@noble/hashes/utils';
-import { base58check } from '@scure/base';
 import * as secp from '@noble/secp256k1';
+import { base58check } from '@scure/base';
 
 // Enable sync API for noble-secp256k1
 secp.utils.hmacSha256Sync = (key: Uint8Array, ...messages: Uint8Array[]) => {
