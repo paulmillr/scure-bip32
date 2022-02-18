@@ -2,11 +2,13 @@
 
 Secure, audited & minimal implementation of BIP32 hierarchical deterministic (HD) wallets.
 
-Developed for
-[js-ethereum-cryptography](https://github.com/ethereum/js-ethereum-cryptography).
-Check out [scure-bip39](https://github.com/paulmillr/scure-bip39) if you need mnemonic phrases.
+Compared to popular `hdkey` package, scure-bip32:
 
-The library has been audited by Cure53 on Jan 5, 2022. Check out the audit [PDF](./audit/2022-01-05-cure53-audit-nbl2.pdf) & [URL](https://cure53.de/pentest-report_hashing-libs.pdf). Before the audit it was called `micro-bip32`.
+- Is 418KB all-bundled instead of 5.9MB
+- Uses 3 dependencies instead of 24
+- Had an external security [audit](#security) by Cure53 on Jan 5, 2022
+
+Check out [scure-bip39](https://github.com/paulmillr/scure-bip39) if you need mnemonic phrases.
 
 ### This library belongs to *scure*
 
@@ -92,6 +94,15 @@ It has almost the exact same API than the version `1.x` of
 but it's backed by this package's primitives, and has built-in TypeScript types.
 Its only difference is that it has to be be used with a named import.
 The implementation is [loosely based on hdkey, which has MIT License](#LICENSE).
+
+## Security
+
+The library has been audited by Cure53 on Jan 5, 2022. Check out the audit [PDF](./audit/2022-01-05-cure53-audit-nbl2.pdf) & [URL](https://cure53.de/pentest-report_hashing-libs.pdf).
+
+1. The library was initially developed for [js-ethereum-cryptography](https://github.com/ethereum/js-ethereum-cryptography)
+2. At commit [ae00e6d7](https://github.com/ethereum/js-ethereum-cryptography/commit/ae00e6d7d24fb3c76a1c7fe10039f6ecd120b77e), it
+  was extracted to a separate package called `micro-bip32`
+3. After the audit we've decided to use NPM namespace for security. Since `@micro` namespace was taken, we've renamed the package to `@scure/bip32`
 
 ## License
 
