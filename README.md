@@ -1,6 +1,6 @@
 # scure-bip32
 
-Secure, audited & minimal implementation of BIP32 hierarchical deterministic (HD) wallets.
+Secure, [audited](#security) & minimal implementation of BIP32 hierarchical deterministic (HD) wallets.
 
 Compared to popular `hdkey` package, scure-bip32:
 
