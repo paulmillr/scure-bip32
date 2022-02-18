@@ -29,8 +29,6 @@ Or
 
 > yarn add @scure/bip32
 
-## API
-
 This module exports a single class `HDKey`, which should be used like this:
 
 ```ts
