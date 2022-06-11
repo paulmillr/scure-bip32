@@ -1,7 +1,6 @@
 /index.js
 /index.d.ts
-/secp256k1.js
-/secp256k1.d.ts
 /test/*.js
 /test/*.d.ts
 /test/test/
+/lib
