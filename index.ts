@@ -4,13 +4,7 @@ import { ripemd160 } from '@noble/hashes/ripemd160';
 import { sha256 } from '@noble/hashes/sha256';
 import { sha512 } from '@noble/hashes/sha512';
 import { bytes as assertBytes } from '@noble/hashes/_assert';
-import {
-  bytesToHex,
-  concatBytes,
-  createView,
-  hexToBytes,
-  utf8ToBytes,
-} from '@noble/hashes/utils';
+import { bytesToHex, concatBytes, createView, hexToBytes, utf8ToBytes } from '@noble/hashes/utils';
 import * as secp from '@noble/secp256k1';
 import { base58check } from '@scure/base';
 
