@@ -3,8 +3,8 @@ import { hmac } from '@noble/hashes/hmac';
 import { ripemd160 } from '@noble/hashes/ripemd160';
 import { sha256 } from '@noble/hashes/sha256';
 import { sha512 } from '@noble/hashes/sha512';
+import { bytes as assertBytes } from '@noble/hashes/_assert';
 import {
-  assertBytes,
   bytesToHex,
   concatBytes,
   createView,
