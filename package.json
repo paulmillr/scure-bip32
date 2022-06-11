@@ -1,12 +1,13 @@
 {
   "name": "@scure/bip32",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Secure, audited & minimal implementation of BIP32 hierarchical deterministic (HD) wallets",
 
   "files": [
     "lib/index.js",
     "lib/esm/index.js",
-    "lib/index.d.ts"
+    "lib/index.d.ts",
+    "lib/esm/package.json"
   ],
   "main": "lib/index.js",
   "module": "lib/esm/index.js",
