@@ -4,6 +4,7 @@
   "description": "Secure, audited & minimal implementation of BIP32 hierarchical deterministic (HD) wallets",
 
   "files": [
+    "index.ts",
     "lib/index.js",
     "lib/esm/index.js",
     "lib/index.d.ts",
