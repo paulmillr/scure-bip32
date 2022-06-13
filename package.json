@@ -8,6 +8,11 @@
     "lib/index.js",
     "lib/esm/index.js",
     "lib/index.d.ts",
+    "lib/esm/index.d.ts",
+    "lib/index.js.map",
+    "lib/esm/index.js.map",
+    "lib/index.d.ts.map",
+    "lib/esm/index.d.ts.map",
     "lib/esm/package.json"
   ],
   "main": "lib/index.js",
@@ -17,8 +22,7 @@
     ".": {
       "import": "./lib/esm/index.js",
       "default": "./lib/index.js"
-    },
-    "./index.d.ts": "./lib/index.d.ts"
+    }
   },
   "dependencies": {
     "@noble/hashes": "~1.1.1",
