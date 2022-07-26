@@ -10,6 +10,10 @@
     "removeComments": true,
     "preserveConstEnums": true,
     "baseUrl": ".",
+    "sourceMap": true,
+    "inlineSources": true,
+    "declaration": true,
+    "declarationMap": true,
   },
   "include": ["index.ts"],
   "exclude": ["node_modules", "lib"]
