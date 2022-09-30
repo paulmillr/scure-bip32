@@ -4,18 +4,13 @@ import { ripemd160 } from '@noble/hashes/ripemd160';
 import { sha256 } from '@noble/hashes/sha256';
 import { sha512 } from '@noble/hashes/sha512';
 import { bytes as assertBytes } from '@noble/hashes/_assert';
-import { bytesToHex, concatBytes, createView, hexToBytes, utf8ToBytes } from '@noble/hashes/utils';
+import { bytesToHex, concatBytes, createView, hexToBytes, utf8ToBytes, } from '@noble/hashes/utils';
 import * as secp from '@noble/secp256k1';
-import { base58check } from '@scure/base';
+import { base58check as base58checker } from '@scure/base';
 
 // Enable sync API for noble-secp256k1
-secp.utils.hmacSha256Sync = (key: Uint8Array, ...messages: Uint8Array[]) => {
-  const h = hmac.create(sha256, key);
-  messages.forEach((msg) => h.update(msg));
-  return h.digest();
-};
-
-const base58c = base58check(sha256);
+secp.utils.hmacSha256Sync = (key, ...msgs) => hmac(sha256, key, secp.utils.concatBytes(...msgs))
+const base58check = base58checker(sha256);
 
 function bytesToNumber(bytes: Uint8Array): bigint {
   return BigInt(`0x${bytesToHex(bytes)}`);
@@ -80,7 +75,7 @@ export class HDKey {
     if (!priv) {
       throw new Error('No private key');
     }
-    return base58c.encode(
+    return base58check.encode(
       this.serialize(this.versions.private, concatBytes(new Uint8Array([0]), priv))
     );
   }
@@ -88,10 +83,11 @@ export class HDKey {
     if (!this.pubKey) {
       throw new Error('No public key');
     }
-    return base58c.encode(this.serialize(this.versions.public, this.pubKey));
+    return base58check.encode(this.serialize(this.versions.public, this.pubKey));
   }
 
   public static fromMasterSeed(seed: Uint8Array, versions: Versions = BITCOIN_VERSIONS): HDKey {
+    assertBytes(seed);
     if (8 * seed.length < 128 || 8 * seed.length > 512) {
       throw new Error(
         `HDKey: wrong seed length=${seed.length}. Should be between 128 and 512 bits; 256 bits is advised)`
@@ -107,7 +103,7 @@ export class HDKey {
 
   public static fromExtendedKey(base58key: string, versions: Versions = BITCOIN_VERSIONS): HDKey {
     // => version(4) || depth(1) || fingerprint(4) || index(4) || chain(32) || key(33)
-    const keyBuffer: Uint8Array = base58c.decode(base58key);
+    const keyBuffer: Uint8Array = base58check.decode(base58key);
     const keyView = createView(keyBuffer);
     const version = keyView.getUint32(0, false);
     const opt = {
