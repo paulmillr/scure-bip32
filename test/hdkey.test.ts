@@ -2,8 +2,7 @@ import * as secp from '@noble/secp256k1';
 import { HARDENED_OFFSET, HDKey } from '..';
 import { hexToBytes, bytesToHex as toHex } from '@noble/hashes/utils';
 import { deepStrictEqual, throws } from './assert';
-// @ts-ignore
-import { should as it, should, _describe as describe } from 'micro-should';
+import { it, describe } from 'micro-should';
 // https://github.com/cryptocoinjs/hdkey/blob/42637e381bdef0c8f785b14f5b66a80dad969514/test/fixtures/hdkey.json
 const fixtures = [
   {
@@ -558,4 +557,4 @@ describe('hdkey', () => {
   });
 });
 
-should.run();
+it.run();
