@@ -238,9 +238,12 @@ export class HDKey {
         }
         opt.privateKey = added;
       } else {
-        opt.publicKey = secp.Point.fromHex(this.pubKey)
-          .add(secp.Point.fromPrivateKey(childTweak))
-          .toRawBytes(true);
+        const added = secp.Point.fromHex(this.pubKey).add(secp.Point.fromPrivateKey(childTweak));
+        // Cryptographically impossible: hmac-sha512 preimage would need to be found
+        if (added.equals(secp.Point.ZERO)) {
+          throw new Error('The tweak was equal to negative P, which made the result key invalid')
+        }
+        opt.publicKey = added.toRawBytes(true);
       }
       return new HDKey(opt);
     } catch (err) {
