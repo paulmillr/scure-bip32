@@ -24,8 +24,7 @@
     "@scure/base": "~1.1.0"
   },
   "devDependencies": {
-    "@types/mocha": "9.0.0",
-    "mocha": "9.2.2",
+    "micro-should": "0.2.1",
     "prettier": "2.6.2",
     "typescript": "4.7.3"
   },
@@ -50,7 +49,7 @@
     "build": "tsc -d && tsc -p tsconfig.esm.json",
     "lint": "prettier --check 'index.ts' 'test/*.test.ts'",
     "format": "prettier --write 'index.ts' 'test/*.test.ts'",
-    "test": "cd test && tsc && mocha hdkey.test.js"
+    "test": "cd test && tsc && node hdkey.test.js"
   },
   "keywords": [
     "bip32",

@@ -15,7 +15,8 @@
     "declarationMap": false
   },
   "include": [
-    "*.ts"
+    "assert.ts",
+    "hdkey.test.ts"
   ],
   "exclude": ["node_modules", "./*.d.ts", "./test/*.d.ts"]
 }
