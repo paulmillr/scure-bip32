@@ -6,6 +6,7 @@
     "module": "es6",
     "moduleResolution": "node",
     "outDir": "lib/esm",
+    "sourceMap": true,
     "noImplicitAny": true,
     "removeComments": true,
     "preserveConstEnums": true,

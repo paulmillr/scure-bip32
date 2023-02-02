@@ -3,10 +3,13 @@
   "version": "1.1.4",
   "description": "Secure, audited & minimal implementation of BIP32 hierarchical deterministic (HD) wallets",
   "files": [
+    "index.ts",
     "lib/index.js",
-    "lib/esm/index.js",
     "lib/index.d.ts",
-    "lib/esm/package.json"
+    "lib/index.js.map",
+    "lib/esm/package.json",
+    "lib/esm/index.js",
+    "lib/esm/index.js.map"
   ],
   "main": "lib/index.js",
   "module": "lib/esm/index.js",

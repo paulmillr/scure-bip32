@@ -6,6 +6,8 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "outDir": "lib",
+    "declaration": true,
+    "sourceMap": true,
     "noImplicitAny": true,
     "removeComments": true,
     "preserveConstEnums": true,
