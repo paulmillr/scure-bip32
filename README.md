@@ -8,7 +8,7 @@ Compared to popular `hdkey` package, scure-bip32:
 - Uses 3 dependencies instead of 24
 - Had an external security [audit](#security) by Cure53 on Jan 5, 2022
 
-Check out [scure-bip39](https://github.com/paulmillr/scure-bip39) if you need mnemonic phrases. See [micro-ed25519-hdkey](https://github.com/paulmillr/micro-ed25519-hdkey) if you need SLIP-0010/BIP32 HDKey implementation.
+Check out [scure-bip39](https://github.com/paulmillr/scure-bip39) if you need mnemonic phrases. See [ed25519-keygen](https://github.com/paulmillr/ed25519-keygen) if you need SLIP-0010/BIP32 HDKey implementation.
 
 ### This library belongs to *scure*
 
