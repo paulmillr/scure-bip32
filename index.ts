@@ -5,11 +5,11 @@ import { sha256 } from '@noble/hashes/sha256';
 import { sha512 } from '@noble/hashes/sha512';
 import { bytes as assertBytes } from '@noble/hashes/_assert';
 import { bytesToHex, concatBytes, createView, hexToBytes, utf8ToBytes } from '@noble/hashes/utils';
-import * as secp from '@noble/secp256k1';
+import { secp256k1 as secp } from '@noble/curves/secp256k1';
+import { mod } from '@noble/curves/abstract/modular';
 import { base58check as base58checker } from '@scure/base';
 
-// Enable sync API for noble-secp256k1
-secp.utils.hmacSha256Sync = (key, ...msgs) => hmac(sha256, key, secp.utils.concatBytes(...msgs));
+const Point = secp.ProjectivePoint;
 const base58check = base58checker(sha256);
 
 function bytesToNumber(bytes: Uint8Array): bigint {
@@ -164,7 +164,7 @@ export class HDKey {
       this.privKeyBytes = numberToBytes(this.privKey);
       this.pubKey = secp.getPublicKey(opt.privateKey, true);
     } else if (opt.publicKey) {
-      this.pubKey = secp.Point.fromHex(opt.publicKey).toRawBytes(true); // force compressed point
+      this.pubKey = Point.fromHex(opt.publicKey).toRawBytes(true); // force compressed point
     } else {
       throw new Error('HDKey: no public or private key provided');
     }
@@ -232,15 +232,15 @@ export class HDKey {
     try {
       // Private parent key -> private child key
       if (this.privateKey) {
-        const added = secp.utils.mod(this.privKey! + childTweak, secp.CURVE.n);
+        const added = mod(this.privKey! + childTweak, secp.CURVE.n);
         if (!secp.utils.isValidPrivateKey(added)) {
           throw new Error('The tweak was out of range or the resulted private key is invalid');
         }
         opt.privateKey = added;
       } else {
-        const added = secp.Point.fromHex(this.pubKey).add(secp.Point.fromPrivateKey(childTweak));
+        const added = Point.fromHex(this.pubKey).add(Point.fromPrivateKey(childTweak));
         // Cryptographically impossible: hmac-sha512 preimage would need to be found
-        if (added.equals(secp.Point.ZERO)) {
+        if (added.equals(Point.ZERO)) {
           throw new Error('The tweak was equal to negative P, which made the result key invalid');
         }
         opt.publicKey = added.toRawBytes(true);
@@ -256,10 +256,7 @@ export class HDKey {
       throw new Error('No privateKey set!');
     }
     assertBytes(hash, 32);
-    return secp.signSync(hash, this.privKey!, {
-      canonical: true,
-      der: false,
-    });
+    return secp.sign(hash, this.privKey!).toCompactRawBytes();
   }
 
   public verify(hash: Uint8Array, signature: Uint8Array): boolean {
