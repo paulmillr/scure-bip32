@@ -4,9 +4,10 @@ Secure, [audited](#security) & minimal implementation of BIP32 hierarchical dete
 
 Compared to popular `hdkey` package, scure-bip32:
 
+- Supports ESM and common.js
 - Is 418KB all-bundled instead of 5.9MB
 - Uses 3 dependencies instead of 24
-- Had an external security [audit](#security) by Cure53 on Jan 5, 2022
+- Had an external security [audit](#security) by Cure53
 
 Check out [scure-bip39](https://github.com/paulmillr/scure-bip39) if you need mnemonic phrases. See [ed25519-keygen](https://github.com/paulmillr/ed25519-keygen) if you need SLIP-0010/BIP32 HDKey implementation.
 
