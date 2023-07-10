@@ -1,7 +1,7 @@
 {
   "name": "@scure/bip32",
   "version": "1.3.0",
-  "description": "Secure, audited & minimal implementation of BIP32 hierarchical deterministic (HD) wallets",
+  "description": "Secure, audited & minimal implementation of BIP32 hierarchical deterministic (HD) wallets over secp256k1",
   "files": [
     "index.ts",
     "lib/index.js",

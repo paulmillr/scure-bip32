@@ -1,6 +1,6 @@
 # scure-bip32
 
-Secure, [audited](#security) & minimal implementation of BIP32 hierarchical deterministic (HD) wallets.
+Secure, [audited](#security) & minimal implementation of BIP32 hierarchical deterministic (HD) wallets over secp256k1.
 
 Compared to popular `hdkey` package, scure-bip32:
 
@@ -9,7 +9,7 @@ Compared to popular `hdkey` package, scure-bip32:
 - Uses 3 dependencies instead of 24
 - Had an external security [audit](#security) by Cure53
 
-Check out [scure-bip39](https://github.com/paulmillr/scure-bip39) if you need mnemonic phrases. See [ed25519-keygen](https://github.com/paulmillr/ed25519-keygen) if you need SLIP-0010/BIP32 HDKey implementation.
+Check out [scure-bip39](https://github.com/paulmillr/scure-bip39) if you need mnemonic phrases. See [ed25519-keygen](https://github.com/paulmillr/ed25519-keygen) if you need SLIP-0010/BIP32 ed25519 hdkey implementation.
 
 ### This library belongs to *scure*
 
@@ -26,10 +26,6 @@ Check out [scure-bip39](https://github.com/paulmillr/scure-bip39) if you need mn
 ## Usage
 
 > npm install @scure/bip32
-
-Or
-
-> yarn add @scure/bip32
 
 This module exports a single class `HDKey`, which should be used like this:
 
