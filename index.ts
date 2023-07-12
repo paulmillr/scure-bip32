@@ -183,10 +183,11 @@ export class HDKey {
     let child: HDKey = this;
     for (const c of parts) {
       const m = /^(\d+)('?)$/.exec(c);
-      if (!m || m.length !== 3) {
+      const m1 = m && m[1];
+      if (!m || m.length !== 3 || typeof m1 !== 'string') {
         throw new Error(`Invalid child index: ${c}`);
       }
-      let idx = +m[1];
+      let idx = +m1;
       if (!Number.isSafeInteger(idx) || idx >= HARDENED_OFFSET) {
         throw new Error('Invalid index');
       }
