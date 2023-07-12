@@ -31,8 +31,9 @@
     "prettier": "2.8.4",
     "typescript": "5.0.2"
   },
+  "sideEffects": false,
   "author": "Paul Miller (https://paulmillr.com)",
-  "homepage": "https://paulmillr.com/",
+  "homepage": "https://paulmillr.com/noble/#scure",
   "repository": {
     "type": "git",
     "url": "https://github.com/paulmillr/scure-bip32.git"

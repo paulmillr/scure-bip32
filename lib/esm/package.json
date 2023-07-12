@@ -1,6 +1,4 @@
 {
   "type": "module",
-  "browser": {
-    "crypto": false
-  }
+  "sideEffects": false
 }
