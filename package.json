@@ -50,7 +50,7 @@
   ],
   "license": "MIT",
   "scripts": {
-    "build": "tsc -d && tsc -p tsconfig.esm.json",
+    "build": "tsc && tsc -p tsconfig.esm.json",
     "lint": "prettier --check 'index.ts' 'test/*.test.ts'",
     "format": "prettier --write 'index.ts' 'test/*.test.ts'",
     "test": "cd test && tsc && node hdkey.test.js"
