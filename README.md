@@ -1,15 +1,18 @@
 # scure-bip32
 
-Secure, [audited](#security) & minimal implementation of BIP32 hierarchical deterministic (HD) wallets over secp256k1.
+Audited & minimal implementation of BIP32 hierarchical deterministic (HD) wallets over secp256k1.
 
-Compared to popular `hdkey` package, scure-bip32:
+- 🔒 [Audited](#security) by an independent security firm
+- 🔻 Tree-shaking-friendly: use only what's necessary, other code won't be included
+- 📦 ESM and common.js
+- ➰ Only 3 audited dependencies by same author:
+  [noble-curves](https://github.com/paulmillr/noble-curves),
+  [noble-hashes](https://github.com/paulmillr/noble-hashes),
+  and [scure-base](https://github.com/paulmillr/scure-base)
+- 🪶 Only 418KB all-bundled: much smaller than similar libraries
 
-- Supports ESM and common.js
-- Is 418KB all-bundled instead of 5.9MB
-- Uses 3 dependencies instead of 24
-- Had an external security [audit](#security) by Cure53
-
-Check out [scure-bip39](https://github.com/paulmillr/scure-bip39) if you need mnemonic phrases. See [ed25519-keygen](https://github.com/paulmillr/ed25519-keygen) if you need SLIP-0010/BIP32 ed25519 hdkey implementation.
+Check out [scure-bip39](https://github.com/paulmillr/scure-bip39) if you need mnemonic phrases.
+See [ed25519-keygen](https://github.com/paulmillr/ed25519-keygen) if you need SLIP-0010/BIP32 ed25519 hdkey implementation.
 
 ### This library belongs to *scure*
 
@@ -18,10 +21,10 @@ Check out [scure-bip39](https://github.com/paulmillr/scure-bip39) if you need mn
 - Audited by a third-party
 - Releases are signed with PGP keys and built transparently with NPM provenance
 - Check out all libraries:
-  [scure-base](https://github.com/paulmillr/scure-base),
-  [scure-bip32](https://github.com/paulmillr/scure-bip32),
-  [scure-bip39](https://github.com/paulmillr/scure-bip39),
-  [scure-btc-signer](https://github.com/paulmillr/scure-btc-signer),
+  [base](https://github.com/paulmillr/scure-base),
+  [bip32](https://github.com/paulmillr/scure-bip32),
+  [bip39](https://github.com/paulmillr/scure-bip39),
+  [btc-signer](https://github.com/paulmillr/scure-btc-signer),
   [starknet](https://github.com/paulmillr/scure-starknet)
 
 ## Usage
@@ -94,7 +97,12 @@ The implementation is [loosely based on hdkey, which has MIT License](#LICENSE).
 
 ## Security
 
-The library has been audited by Cure53 on Jan 5, 2022. Check out the audit [PDF](./audit/2022-01-05-cure53-audit-nbl2.pdf) & [URL](https://cure53.de/pentest-report_hashing-libs.pdf). See [changes since audit](https://github.com/paulmillr/scure-bip32/compare/1.0.1..main).
+The library has been independently audited:
+
+- at version 1.0.1, in Jan 2022, by [cure53](https://cure53.de)
+  - PDFs: [online](https://cure53.de/pentest-report_hashing-libs.pdf), [offline](./audit/2022-01-05-cure53-audit-nbl2.pdf)
+  - [Changes since audit](https://github.com/paulmillr/scure-bip32/compare/1.0.0..main).
+  - The audit has been funded by [Ethereum Foundation](https://ethereum.org/en/) with help of [Nomic Labs](https://nomiclabs.io)
 
 The library was initially developed for [js-ethereum-cryptography](https://github.com/ethereum/js-ethereum-cryptography).
 At commit [ae00e6d7](https://github.com/ethereum/js-ethereum-cryptography/commit/ae00e6d7d24fb3c76a1c7fe10039f6ecd120b77e),
