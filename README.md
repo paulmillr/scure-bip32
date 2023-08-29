@@ -18,7 +18,7 @@ See [ed25519-keygen](https://github.com/paulmillr/ed25519-keygen) if you need SL
 
 > **scure** — secure, independently audited packages for every use case.
 
-- Audited by a third-party
+- Minimal or zero dependencies
 - Releases are signed with PGP keys and built transparently with NPM provenance
 - Check out all libraries:
   [base](https://github.com/paulmillr/scure-base),
