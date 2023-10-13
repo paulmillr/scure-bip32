@@ -16,11 +16,11 @@ See [ed25519-keygen](https://github.com/paulmillr/ed25519-keygen) if you need SL
 
 ### This library belongs to *scure*
 
-> **scure** — secure, independently audited packages for every use case.
+> **scure** — audited micro-libraries.
 
 - Zero or minimal dependencies
 - Highly readable TypeScript / JS code
-- PGP-signed releases and transparent NPM builds with provenance
+- PGP-signed releases and transparent NPM builds
 - Check out [homepage](https://paulmillr.com/noble/#scure) & all libraries:
   [base](https://github.com/paulmillr/scure-base),
   [bip32](https://github.com/paulmillr/scure-bip32),
@@ -35,7 +35,7 @@ See [ed25519-keygen](https://github.com/paulmillr/ed25519-keygen) if you need SL
 This module exports a single class `HDKey`, which should be used like this:
 
 ```ts
-const { HDKey } = require("@scure/bip32");
+import { HDKey } from "@scure/bip32";
 const hdkey1 = HDKey.fromMasterSeed(seed);
 const hdkey2 = HDKey.fromExtendedKey(base58key);
 const hdkey3 = HDKey.fromJSON({ xpriv: string });
@@ -87,14 +87,10 @@ interface Versions {
 }
 ```
 
-The `hdkey` submodule provides a library for keys derivation according to
-[BIP32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki).
+The module implements [bip32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki) standard:
+check it out for additional documentation.
 
-It has almost the exact same API than the version `1.x` of
-[`hdkey` from cryptocoinjs](https://github.com/cryptocoinjs/hdkey),
-but it's backed by this package's primitives, and has built-in TypeScript types.
-Its only difference is that it has to be be used with a named import.
-The implementation is [loosely based on hdkey, which has MIT License](#LICENSE).
+The implementation is loosely based on cryptocoinjs/hdkey, [which has MIT License](#LICENSE).
 
 ## Security
 
