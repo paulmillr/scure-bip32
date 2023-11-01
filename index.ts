@@ -42,11 +42,11 @@ const toU32 = (n: number) => {
 };
 
 interface HDKeyOpt {
-  versions: Versions;
+  versions?: Versions;
   depth?: number;
   index?: number;
   parentFingerprint?: number;
-  chainCode: Uint8Array;
+  chainCode?: Uint8Array;
   publicKey?: Uint8Array;
   privateKey?: Uint8Array | bigint;
 }
@@ -144,7 +144,7 @@ export class HDKey {
     }
     this.versions = opt.versions || BITCOIN_VERSIONS;
     this.depth = opt.depth || 0;
-    this.chainCode = opt.chainCode;
+    this.chainCode = opt.chainCode || null;
     this.index = opt.index || 0;
     this.parentFingerprint = opt.parentFingerprint || 0;
     if (!this.depth) {
