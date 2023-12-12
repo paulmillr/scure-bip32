@@ -7,10 +7,10 @@ import { bytes as assertBytes } from '@noble/hashes/_assert';
 import { bytesToHex, concatBytes, createView, hexToBytes, utf8ToBytes } from '@noble/hashes/utils';
 import { secp256k1 as secp } from '@noble/curves/secp256k1';
 import { mod } from '@noble/curves/abstract/modular';
-import { base58check as base58checker } from '@scure/base';
+import { createBase58check } from '@scure/base';
 
 const Point = secp.ProjectivePoint;
-const base58check = base58checker(sha256);
+const base58check = createBase58check(sha256);
 
 function bytesToNumber(bytes: Uint8Array): bigint {
   return BigInt(`0x${bytesToHex(bytes)}`);
