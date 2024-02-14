@@ -9,7 +9,7 @@ Audited & minimal implementation of BIP32 hierarchical deterministic (HD) wallet
   [noble-curves](https://github.com/paulmillr/noble-curves),
   [noble-hashes](https://github.com/paulmillr/noble-hashes),
   and [scure-base](https://github.com/paulmillr/scure-base)
-- 🪶 Only 418KB all-bundled: much smaller than similar libraries
+- 🪶 300 lines. 90KB with all dependencies
 
 Check out [scure-bip39](https://github.com/paulmillr/scure-bip39) if you need mnemonic phrases.
 See [ed25519-keygen](https://github.com/paulmillr/ed25519-keygen) if you need SLIP-0010/BIP32 ed25519 hdkey implementation.
