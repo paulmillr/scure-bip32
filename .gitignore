@@ -1,6 +1,8 @@
+node_modules
 /index.js
 /index.d.ts
 /test/*.js
 /test/*.d.ts
 /test/test/
 /lib
+/build/scure-bip32.js

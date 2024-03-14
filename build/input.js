@@ -1,0 +1,1 @@
+export { HDKey } from '../index.js';
