@@ -27,6 +27,7 @@
     "@scure/base": "~1.1.5"
   },
   "devDependencies": {
+    "@paulmillr/jsbt": "0.1.0",
     "micro-should": "0.4.0",
     "prettier": "3.1.1",
     "typescript": "5.3.2"
@@ -51,7 +52,7 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc && tsc -p tsconfig.esm.json",
-    "build:release": "cd build && npm ci && npm run build",
+    "build:release": "cd build && npm ci && npm run build:release",
     "lint": "prettier --check 'index.ts' 'test/*.test.ts'",
     "format": "prettier --write 'index.ts' 'test/*.test.ts'",
     "test": "cd test && tsc && node hdkey.test.js"

@@ -1,1 +1,1 @@
-export { HDKey } from '../index.js';
+export { HDKey } from 'lib';
