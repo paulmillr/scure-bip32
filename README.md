@@ -1,4 +1,34 @@
-# scure-bip32
+class HDKey {
+  public static HARDENED_OFFSET: number;
+  public static fromMasterSeed(seed: Uint8Array, versions: Versions): HDKey;
+  public static fromExtendedKey(base58key: string, versions: Versions): HDKey;
+  public static fromJSON(json: { xpriv: string }): HDKey;
+
+  readonly versions: Versions;
+  readonly depth: number = 0;
+  readonly index: number = 0;
+  readonly chainCode: Uint8Array | null = null;
+  readonly parentFingerprint: number = 0;
+
+  get fingerprint(): number;
+  get identifier(): Uint8Array | undefined;
+  get pubKeyHash(): Uint8Array | undefined;
+  get privateKey(): Uint8Array | null;
+  get publicKey(): Uint8Array | null;
+  get privateExtendedKey(): string;
+  get publicExtendedKey(): string;
+
+  derive(path: string): HDKey;
+  deriveChild(index: number): HDKey;
+  sign(hash: Uint8Array): Uint8Array;
+  verify(hash: Uint8Array, signature: Uint8Array): boolean;
+  wipePrivateData(): this;
+}
+
+interface Versions {
+  private: number;
+  public: number;
+}# scure-bip32
 
 Audited & minimal implementation of BIP32 hierarchical deterministic (HD) wallets over secp256k1.
 
