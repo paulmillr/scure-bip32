@@ -3,16 +3,16 @@
 Audited & minimal implementation of BIP32 hierarchical deterministic (HD) wallets over secp256k1.
 
 - 🔒 [Audited](#security) by an independent security firm
-- 🔻 Tree-shaking-friendly: use only what's necessary, other code won't be included
+- 🔻 Tree-shakeable: unused code is excluded from your builds
 - 📦 ESM and common.js
 - ➰ Only 3 audited dependencies by the same author:
   [noble-curves](https://github.com/paulmillr/noble-curves),
   [noble-hashes](https://github.com/paulmillr/noble-hashes),
   and [scure-base](https://github.com/paulmillr/scure-base)
-- 🪶 300 lines. 90KB with all dependencies
+- 🪶 300 lines. 90KB with all dependencies bundled
 
 Check out [scure-bip39](https://github.com/paulmillr/scure-bip39) if you need mnemonic phrases.
-See [ed25519-keygen](https://github.com/paulmillr/ed25519-keygen) if you need SLIP-0010/BIP32 ed25519 hdkey implementation.
+See [key-producer](https://github.com/paulmillr/micro-key-producer) if you need SLIP-0010/BIP32 ed25519 hdkey implementation.
 
 ### This library belongs to *scure*
 
