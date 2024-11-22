@@ -3,7 +3,7 @@ import { hmac } from '@noble/hashes/hmac';
 import { ripemd160 } from '@noble/hashes/ripemd160';
 import { sha256 } from '@noble/hashes/sha256';
 import { sha512 } from '@noble/hashes/sha512';
-import { bytes as assertBytes } from '@noble/hashes/_assert';
+import { bytes as abytes } from '@noble/hashes/_assert';
 import { bytesToHex, concatBytes, createView, hexToBytes, utf8ToBytes } from '@noble/hashes/utils';
 import { secp256k1 as secp } from '@noble/curves/secp256k1';
 import { mod } from '@noble/curves/abstract/modular';
@@ -87,7 +87,7 @@ export class HDKey {
   }
 
   public static fromMasterSeed(seed: Uint8Array, versions: Versions = BITCOIN_VERSIONS): HDKey {
-    assertBytes(seed);
+    abytes(seed);
     if (8 * seed.length < 128 || 8 * seed.length > 512) {
       throw new Error(
         `HDKey: wrong seed length=${seed.length}. Should be between 128 and 512 bits; 256 bits is advised)`
@@ -256,13 +256,13 @@ export class HDKey {
     if (!this.privateKey) {
       throw new Error('No privateKey set!');
     }
-    assertBytes(hash, 32);
+    abytes(hash, 32);
     return secp.sign(hash, this.privKey!).toCompactRawBytes();
   }
 
   public verify(hash: Uint8Array, signature: Uint8Array): boolean {
-    assertBytes(hash, 32);
-    assertBytes(signature, 64);
+    abytes(hash, 32);
+    abytes(signature, 64);
     if (!this.publicKey) {
       throw new Error('No publicKey set!');
     }
@@ -294,7 +294,7 @@ export class HDKey {
     if (!this.chainCode) {
       throw new Error('No chainCode set');
     }
-    assertBytes(key, 33);
+    abytes(key, 33);
     // version(4) || depth(1) || fingerprint(4) || index(4) || chain(32) || key(33)
     return concatBytes(
       toU32(version),
