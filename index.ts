@@ -13,10 +13,13 @@ const Point = secp.ProjectivePoint;
 const base58check = createBase58check(sha256);
 
 function bytesToNumber(bytes: Uint8Array): bigint {
-  return BigInt(`0x${bytesToHex(bytes)}`);
+  abytes(bytes);
+  const h = bytes.length === 0 ? '0' : bytesToHex(bytes);
+  return BigInt('0x' + h);
 }
 
 function numberToBytes(num: bigint): Uint8Array {
+  if (typeof num !== 'bigint') throw new Error('bigint expected');
   return hexToBytes(num.toString(16).padStart(64, '0'));
 }
 
