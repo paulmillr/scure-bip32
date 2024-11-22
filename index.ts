@@ -37,7 +37,7 @@ const hash160 = (data: Uint8Array) => ripemd160(sha256(data));
 const fromU32 = (data: Uint8Array) => createView(data).getUint32(0, false);
 const toU32 = (n: number) => {
   if (!Number.isSafeInteger(n) || n < 0 || n > 2 ** 32 - 1) {
-    throw new Error(`Invalid number=${n}. Should be from 0 to 2 ** 32 - 1`);
+    throw new Error('invalid number, should be from 0 to 2**32-1, got ' + n);
   }
   const buf = new Uint8Array(4);
   createView(buf).setUint32(0, n, false);
@@ -93,7 +93,8 @@ export class HDKey {
     abytes(seed);
     if (8 * seed.length < 128 || 8 * seed.length > 512) {
       throw new Error(
-        `HDKey: wrong seed length=${seed.length}. Should be between 128 and 512 bits; 256 bits is advised)`
+        'HDKey: seed length must be between 128 and 512 bits; 256 bits is advised, got ' +
+          seed.length
       );
     }
     const I = hmac(sha512, MASTER_SECRET, seed);
@@ -187,9 +188,8 @@ export class HDKey {
     for (const c of parts) {
       const m = /^(\d+)('?)$/.exec(c);
       const m1 = m && m[1];
-      if (!m || m.length !== 3 || typeof m1 !== 'string') {
-        throw new Error(`Invalid child index: ${c}`);
-      }
+      if (!m || m.length !== 3 || typeof m1 !== 'string')
+        throw new Error('invalid child index: ' + c);
       let idx = +m1;
       if (!Number.isSafeInteger(idx) || idx >= HARDENED_OFFSET) {
         throw new Error('Invalid index');
