@@ -3,7 +3,7 @@ import { hmac } from '@noble/hashes/hmac';
 import { ripemd160 } from '@noble/hashes/ripemd160';
 import { sha256 } from '@noble/hashes/sha256';
 import { sha512 } from '@noble/hashes/sha512';
-import { bytes as abytes } from '@noble/hashes/_assert';
+import { abytes } from '@noble/hashes/_assert';
 import { bytesToHex, concatBytes, createView, hexToBytes, utf8ToBytes } from '@noble/hashes/utils';
 import { secp256k1 as secp } from '@noble/curves/secp256k1';
 import { mod } from '@noble/curves/abstract/modular';
