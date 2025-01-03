@@ -1,6 +1,6 @@
 {
   "name": "@scure/bip32",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "Secure, audited & minimal implementation of BIP32 hierarchical deterministic (HD) wallets over secp256k1",
   "files": [
     "index.ts",
