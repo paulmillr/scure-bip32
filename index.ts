@@ -1,6 +1,7 @@
 /**
- * BIP32 hierarchical deterministic (HD) wallets over secp256k1.
+ * @module BIP32 hierarchical deterministic (HD) wallets over secp256k1.
  * @example
+ * ```js
  * import { HDKey } from "@scure/bip32";
  * const hdkey1 = HDKey.fromMasterSeed(seed);
  * const hdkey2 = HDKey.fromExtendedKey(base58key);
@@ -12,7 +13,7 @@
  * console.log(hdkey3.derive("m/0/2147483647'/1"));
  * const sig = hdkey3.sign(hash);
  * hdkey3.verify(hash, sig);
- * @module
+ * ```
  */
 /*! scure-bip32 - MIT License (c) 2022 Patricio Palladino, Paul Miller (paulmillr.com) */
 import { hmac } from '@noble/hashes/hmac';
