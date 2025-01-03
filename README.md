@@ -32,6 +32,10 @@ See [key-producer](https://github.com/paulmillr/micro-key-producer) if you need 
 
 > npm install @scure/bip32
 
+> deno add @scure/bip32
+
+> deno doc @scure/bip32  # command-line documentation
+
 This module exports a single class `HDKey`, which should be used like this:
 
 ```ts
