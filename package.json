@@ -49,7 +49,7 @@
     "build:release": "cd build && npm ci && npm run build:release",
     "lint": "prettier --check 'index.ts' 'test/*.test.ts'",
     "format": "prettier --write 'index.ts' 'test/*.test.ts'",
-    "test": "cd test && tsc && node hdkey.test.js"
+    "test": "node test/index.js"
   },
   "keywords": [
     "bip32",
