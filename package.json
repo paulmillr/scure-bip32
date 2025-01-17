@@ -49,7 +49,9 @@
     "build:release": "cd build && npm ci && npm run build:release",
     "lint": "prettier --check 'index.ts' 'test/*.test.ts'",
     "format": "prettier --write 'index.ts' 'test/*.test.ts'",
-    "test": "node test/index.js"
+    "test": "node test/index.js",
+    "test:bun": "bun test/index.js",
+    "test:deno": "deno --allow-env --allow-read test/index.js"
   },
   "keywords": [
     "bip32",
