@@ -14,7 +14,7 @@ Audited & minimal implementation of BIP32 hierarchical deterministic (HD) wallet
 Check out [scure-bip39](https://github.com/paulmillr/scure-bip39) if you need mnemonic phrases.
 See [key-producer](https://github.com/paulmillr/micro-key-producer) if you need SLIP-0010/BIP32 ed25519 hdkey implementation.
 
-### This library belongs to *scure*
+### This library belongs to _scure_
 
 > **scure** — audited micro-libraries.
 
@@ -34,12 +34,12 @@ See [key-producer](https://github.com/paulmillr/micro-key-producer) if you need 
 
 > `deno add jsr:@scure/bip32`
 
-> `deno doc jsr:@scure/bip32`  # command-line documentation
+> `deno doc jsr:@scure/bip32` # command-line documentation
 
 This module exports a single class `HDKey`, which should be used like this:
 
 ```ts
-import { HDKey } from "@scure/bip32";
+import { HDKey } from '@scure/bip32';
 const hdkey1 = HDKey.fromMasterSeed(seed);
 const hdkey2 = HDKey.fromExtendedKey(base58key);
 const hdkey3 = HDKey.fromJSON({ xpriv: string });
@@ -109,6 +109,30 @@ The library was initially developed for [js-ethereum-cryptography](https://githu
 At commit [ae00e6d7](https://github.com/ethereum/js-ethereum-cryptography/commit/ae00e6d7d24fb3c76a1c7fe10039f6ecd120b77e),
 it was extracted to a separate package called `micro-bip32`.
 After the audit we've decided to use `@scure` NPM namespace for security.
+
+### Supply chain security
+
+- **Commits** are signed with PGP keys, to prevent forgery. Make sure to verify commit signatures
+- **Releases** are transparent and built on GitHub CI. Make sure to verify [provenance](https://docs.npmjs.com/generating-provenance-statements) logs
+- **Rare releasing** is followed to ensure less re-audit need for end-users
+- **Dependencies** are minimized and locked-down: any dependency could get hacked and users will be downloading malware with every install.
+  - We make sure to use as few dependencies as possible
+  - Automatic dep updates are prevented by locking-down version ranges; diffs are checked with `npm-diff`
+- **Dev Dependencies** are disabled for end-users; they are only used to develop / build the source code
+
+For this package, there are 3 dependencies; and a few dev dependencies:
+
+- [noble-hashes](https://github.com/paulmillr/noble-hashes) provides cryptographic hashing functionality
+- [noble-curves](https://github.com/paulmillr/noble-curves) provides ECDSA
+- [scure-base](https://github.com/paulmillr/scure-base) provides base58
+- micro-bmark, micro-should and jsbt are used for benchmarking / testing / build tooling and developed by the same author
+- prettier, fast-check and typescript are used for code quality / test generation / ts compilation. It's hard to audit their source code thoroughly and fully because of their size
+
+## Contributing & testing
+
+- `npm install && npm run build && npm test` will build the code and run tests.
+- `npm run lint` / `npm run format` will run linter / fix linter issues.
+- `npm run build:release` will build single file
 
 ## License
 
