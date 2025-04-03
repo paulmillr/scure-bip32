@@ -79,6 +79,30 @@ const fixtures = [
     },
 ];
 describe('hdkey', () => {
+
+    it('Should throw an error when deriving keys of 256 depth', () => {
+      const seed = '000102030405060708090a0b0c0d0e0f';
+      var hdkey = HDKey.fromMasterSeed(hexToBytes(seed));
+
+      // deriving 255 children should work
+      for (let i = 0; i < 255; i++) {
+          hdkey = hdkey.deriveChild(0);
+      }
+      // deriving one more shall throw an error
+      throws(() => hdkey = hdkey.deriveChild(0));
+    });
+
+    it('Should throw an error when deriving from path of length 256', () => {
+      const seed = '000102030405060708090a0b0c0d0e0f';
+      var hdkey = HDKey.fromMasterSeed(hexToBytes(seed));
+
+      // master key "lives" at 0th level, together with 255
+      // more level its 256, which is still serializable
+      hdkey.derive('m' + '/0'.repeat(255));
+      // but deriving one level deeper fails.
+      throws(() => hdkey.derive('m' + '/0'.repeat(256)));
+    });
+
     it('Should derive private key correctly', () => {
         const seed = 'fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a29f9c999693908d8a8784817e7b7875726f6c696663605d5a5754514e4b484542';
         const hdkey = HDKey.fromMasterSeed(hexToBytes(seed));

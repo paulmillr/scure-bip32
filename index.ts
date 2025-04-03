@@ -221,6 +221,9 @@ export class HDKey {
   }
 
   public deriveChild(index: number): HDKey {
+    if (this.depth == 255) {
+        throw new Error('Cannot derive key with depth > 255');
+    }
     if (!this.pubKey || !this.chainCode) {
       throw new Error('No publicKey or chainCode set');
     }
