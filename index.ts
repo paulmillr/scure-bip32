@@ -163,6 +163,9 @@ export class HDKey {
     if (!opt || typeof opt !== 'object') {
       throw new Error('HDKey.constructor must not be called directly');
     }
+    if (typeof opt.depth !== 'undefined' && opt.depth >= 256) {
+      throw new Error('HDKey: opt.depth exceeds the serializable value 255');
+    }
     this.versions = opt.versions || BITCOIN_VERSIONS;
     this.depth = opt.depth || 0;
     this.chainCode = opt.chainCode || null;
@@ -221,9 +224,6 @@ export class HDKey {
   }
 
   public deriveChild(index: number): HDKey {
-    if (this.depth >= 255) {
-      throw new Error('Cannot derive key with depth > 255');
-    }
     if (!this.pubKey || !this.chainCode) {
       throw new Error('No publicKey or chainCode set');
     }
