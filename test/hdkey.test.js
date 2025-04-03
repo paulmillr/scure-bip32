@@ -116,9 +116,8 @@ describe('hdkey', () => {
           hdkey = hdkey.deriveChild(0);
       }
       // deriving one more shall throw an error
-      throws(() => hdkey = hdkey.deriveChild(0));
+      throws(() => hdkey.deriveChild(0));
     });
-
     it('Should throw an error when deriving from path of length 256', () => {
       const seed = '000102030405060708090a0b0c0d0e0f';
       var hdkey = HDKey.fromMasterSeed(hexToBytes(seed));
