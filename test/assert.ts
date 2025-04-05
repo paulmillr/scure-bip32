@@ -54,13 +54,13 @@ function deepStrictEqual(actual: unknown, expected: unknown, message?: string) {
   throw err;
 }
 
-async function throws(cb: () => any) {
+function throws(cb: () => any) {
   try {
     cb();
   } catch (e) {
     return;
   }
-  throw new Error('Missing expected exception.');
+  throw new Error('Missing expected exception');
 }
 
 async function rejects(cb: () => Promise<any>): Promise<void> {
@@ -69,7 +69,7 @@ async function rejects(cb: () => Promise<any>): Promise<void> {
   } catch (e) {
     return;
   }
-  throw new Error('Missing expected rejection.');
+  throw new Error('Missing expected rejection');
 }
 
 // Run tests with node assert:
