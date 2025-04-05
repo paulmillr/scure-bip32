@@ -163,6 +163,9 @@ export class HDKey {
     if (!opt || typeof opt !== 'object') {
       throw new Error('HDKey.constructor must not be called directly');
     }
+    if (typeof opt.depth !== 'undefined' && opt.depth >= 256) {
+      throw new Error('HDKey: opt.depth exceeds the serializable value 255');
+    }
     this.versions = opt.versions || BITCOIN_VERSIONS;
     this.depth = opt.depth || 0;
     this.chainCode = opt.chainCode || null;
