@@ -49,14 +49,14 @@ function deepStrictEqual(actual, expected, message) {
     }
     throw err;
 }
-async function throws(cb) {
+function throws(cb) {
     try {
         cb();
     }
     catch (e) {
         return;
     }
-    throw new Error('Missing expected exception.');
+    throw new Error('Missing expected exception');
 }
 async function rejects(cb) {
     try {
@@ -65,7 +65,7 @@ async function rejects(cb) {
     catch (e) {
         return;
     }
-    throw new Error('Missing expected rejection.');
+    throw new Error('Missing expected rejection');
 }
 // Run tests with node assert:
 // import { deepStrictEqual, throws } from "assert";
