@@ -16,14 +16,19 @@
  * ```
  */
 /*! scure-bip32 - MIT License (c) 2022 Patricio Palladino, Paul Miller (paulmillr.com) */
-import { hmac } from '@noble/hashes/hmac';
-import { ripemd160 } from '@noble/hashes/ripemd160';
-import { sha256 } from '@noble/hashes/sha256';
-import { sha512 } from '@noble/hashes/sha512';
-import { abytes } from '@noble/hashes/_assert';
-import { bytesToHex, concatBytes, createView, hexToBytes, utf8ToBytes } from '@noble/hashes/utils';
-import { secp256k1 as secp } from '@noble/curves/secp256k1';
 import { mod } from '@noble/curves/abstract/modular';
+import { secp256k1 as secp } from '@noble/curves/secp256k1';
+import { hmac } from '@noble/hashes/hmac';
+import { ripemd160 } from '@noble/hashes/legacy';
+import { sha256, sha512 } from '@noble/hashes/sha2';
+import {
+  abytes,
+  bytesToHex,
+  concatBytes,
+  createView,
+  hexToBytes,
+  utf8ToBytes,
+} from '@noble/hashes/utils';
 import { createBase58check } from '@scure/base';
 
 const Point = secp.ProjectivePoint;
