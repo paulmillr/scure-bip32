@@ -1,6 +1,6 @@
 {
   "name": "@scure/bip32",
-  "version": "1.6.2",
+  "version": "1.7.0",
   "description": "Secure, audited & minimal implementation of BIP32 hierarchical deterministic (HD) wallets over secp256k1",
   "files": [
     "index.ts",
@@ -33,16 +33,6 @@
     "type": "git",
     "url": "git+https://github.com/paulmillr/scure-bip32.git"
   },
-  "contributors": [
-    {
-      "name": "Patricio Palladino",
-      "email": "patricio@nomiclabs.io"
-    },
-    {
-      "name": "Paul Miller",
-      "url": "https://paulmillr.com"
-    }
-  ],
   "license": "MIT",
   "scripts": {
     "build": "tsc && tsc -p tsconfig.cjs.json",

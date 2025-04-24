@@ -1,13 +1,13 @@
 {
   "name": "@scure/bip32",
-  "version": "1.6.2",
+  "version": "1.7.0",
   "exports": {
     ".": "./index.ts"
   },
   "imports": {
-    "@noble/curves": "jsr:@noble/curves@~1.8.1",
-    "@noble/hashes": "jsr:@noble/hashes@~1.7.1",
-    "@scure/base": "jsr:@scure/base@~1.2.2"
+    "@noble/curves": "jsr:@noble/curves@~1.9.0",
+    "@noble/hashes": "jsr:@noble/hashes@~1.8.0",
+    "@scure/base": "jsr:@scure/base@~1.2.5"
   },
   "publish": {
     "include": [
