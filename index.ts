@@ -1,5 +1,6 @@
 /**
- * @module BIP32 hierarchical deterministic (HD) wallets over secp256k1.
+ * BIP32 hierarchical deterministic (HD) wallets over secp256k1.
+ * @module
  * @example
  * ```js
  * import { HDKey } from "@scure/bip32";
@@ -46,14 +47,16 @@ function numberToBytes(num: bigint): Uint8Array {
 }
 
 const MASTER_SECRET = utf8ToBytes('Bitcoin seed');
-// Bitcoin hardcoded by default
-const BITCOIN_VERSIONS: Versions = { private: 0x0488ade4, public: 0x0488b21e };
-export const HARDENED_OFFSET: number = 0x80000000;
 
+/** Network-specific versioning. */
 export interface Versions {
   private: number;
   public: number;
 }
+
+const BITCOIN_VERSIONS: Versions = { private: 0x0488ade4, public: 0x0488b21e };
+/** Hardened offset from Bitcoin, default */
+export const HARDENED_OFFSET: number = 0x80000000;
 
 const hash160 = (data: Uint8Array) => ripemd160(sha256(data));
 const fromU32 = (data: Uint8Array) => createView(data).getUint32(0, false);
@@ -76,6 +79,15 @@ interface HDKeyOpt {
   privateKey?: Uint8Array | bigint;
 }
 
+/**
+ * HDKey from BIP32
+ * @example
+```js
+const hdkey1 = HDKey.fromMasterSeed(seed);
+const hdkey2 = HDKey.fromExtendedKey(base58key);
+const hdkey3 = HDKey.fromJSON({ xpriv: string });
+```
+ */
 export class HDKey {
   get fingerprint(): number {
     if (!this.pubHash) {
