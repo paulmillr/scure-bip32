@@ -1,22 +1,12 @@
 {
+  "extends": "@paulmillr/jsbt/tsconfig.test.json",
   "compilerOptions": {
-    "target": "es2020",
-    "module": "NodeNext",
-    "strict": true,
-    "esModuleInterop": true,
-    "downlevelIteration": true,
-    "rootDirs": [
-      "."
-    ],
-    "outDir": ".",
-    "sourceMap": false,
-    "noUnusedLocals": true,
-    "declaration": true,
-    "declarationMap": false
+    "outDir": "compiled",
   },
   "include": [
-    "assert.ts",
-    "hdkey.test.ts"
+    "*.ts"
   ],
-  "exclude": ["node_modules", "./*.d.ts", "./test/*.d.ts"]
+  "exclude": [
+    "node_modules"
+  ]
 }

@@ -1,8 +1,8 @@
-import { secp256k1 as secp } from '@noble/curves/secp256k1';
-import { HARDENED_OFFSET, HDKey } from '../lib/esm/index.js';
-import { hexToBytes, bytesToHex as toHex } from '@noble/hashes/utils';
-import { deepStrictEqual, throws } from './assert.js';
-import { it, describe } from 'micro-should';
+import { secp256k1 as secp } from '@noble/curves/secp256k1.js';
+import { hexToBytes, bytesToHex as toHex } from '@noble/hashes/utils.js';
+import { describe, it } from 'micro-should';
+import { HARDENED_OFFSET, HDKey } from '../index.ts';
+import { deepStrictEqual, throws } from './assert.ts';
 // https://github.com/cryptocoinjs/hdkey/blob/42637e381bdef0c8f785b14f5b66a80dad969514/test/fixtures/hdkey.json
 const fixtures = [
   {

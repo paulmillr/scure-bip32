@@ -17,11 +17,11 @@
  * ```
  */
 /*! scure-bip32 - MIT License (c) 2022 Patricio Palladino, Paul Miller (paulmillr.com) */
-import { mod } from '@noble/curves/abstract/modular';
-import { secp256k1 as secp } from '@noble/curves/secp256k1';
-import { hmac } from '@noble/hashes/hmac';
-import { ripemd160 } from '@noble/hashes/legacy';
-import { sha256, sha512 } from '@noble/hashes/sha2';
+import { mod } from '@noble/curves/abstract/modular.js';
+import { secp256k1 as secp } from '@noble/curves/secp256k1.js';
+import { hmac } from '@noble/hashes/hmac.js';
+import { ripemd160 } from '@noble/hashes/legacy.js';
+import { sha256, sha512 } from '@noble/hashes/sha2.js';
 import {
   abytes,
   bytesToHex,
@@ -29,7 +29,7 @@ import {
   createView,
   hexToBytes,
   utf8ToBytes,
-} from '@noble/hashes/utils';
+} from '@noble/hashes/utils.js';
 import { createBase58check } from '@scure/base';
 
 const Point = secp.ProjectivePoint;
