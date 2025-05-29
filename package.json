@@ -4,7 +4,10 @@
   "description": "Secure, audited & minimal implementation of BIP32 hierarchical deterministic (HD) wallets over secp256k1",
   "files": [
     "index.ts",
-    "./lib"
+    "index.js",
+    "index.js.map",
+    "index.d.ts",
+    "index.d.ts.map"
   ],
   "type": "module",
   "main": "./index.js",
@@ -17,7 +20,7 @@
   },
   "devDependencies": {
     "@paulmillr/jsbt": "0.4.1",
-    "micro-should": "0.5.2",
+    "micro-should": "0.5.3",
     "prettier": "3.5.3",
     "typescript": "5.8.3"
   },
