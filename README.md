@@ -13,6 +13,7 @@ Audited & minimal implementation of BIP32 hierarchical deterministic (HD) wallet
 
 Check out [scure-bip39](https://github.com/paulmillr/scure-bip39) if you need mnemonic phrases.
 See [key-producer](https://github.com/paulmillr/micro-key-producer) if you need SLIP-0010/BIP32 ed25519 hdkey implementation.
+Notice [Warnings about BIP32](#warnings-about-bip32).
 
 ### This library belongs to _scure_
 
@@ -96,6 +97,19 @@ The module implements [bip32](https://github.com/bitcoin/bips/blob/master/bip-00
 check it out for additional documentation.
 
 The implementation is loosely based on cryptocoinjs/hdkey, [which has MIT License](#LICENSE).
+
+## Warnings about BIP32
+
+- Network IDs (different currencies) are taken from a single GitHub document
+  called SLIP-0044
+- There were new projects, which did not yet have SLIP. Exchanges added support of
+  those projects to their cold wallets. Then after the projects were added to SLIP,
+  the exchanges were required to re-generate their cold wallets - a complicated task
+- BIP32 is unusable for many different elliptic curves. For example, ETH2 uses bls12-381
+  curve, and with bip32 54% of generated keys would be invalid. So, they’re using much better
+  BLS-only EIP-2333 as a replacement.
+- It’s easy to shoot yourself in foot with non-hardened keys, which
+  could allow simple de-anonimization of all addresses
 
 ## Security
 
