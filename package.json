@@ -34,7 +34,7 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc",
-    "build:release": "npx jsbt esbuild test/build",
+    "build:release": "npx --no @paulmillr/jsbt esbuild test/build",
     "lint": "prettier --check 'index.ts' 'test/*.test.ts'",
     "format": "prettier --write 'index.ts' 'test/*.test.ts'",
     "test": "node --experimental-strip-types --no-warnings test/index.ts",

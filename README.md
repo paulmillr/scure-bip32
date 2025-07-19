@@ -26,6 +26,7 @@ See [key-producer](https://github.com/paulmillr/micro-key-producer) if you need 
   [bip32](https://github.com/paulmillr/scure-bip32),
   [bip39](https://github.com/paulmillr/scure-bip39),
   [btc-signer](https://github.com/paulmillr/scure-btc-signer),
+  [sr25519](https://github.com/paulmillr/scure-sr25519),
   [starknet](https://github.com/paulmillr/scure-starknet)
 
 ## Usage
