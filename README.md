@@ -100,6 +100,8 @@ The implementation is loosely based on cryptocoinjs/hdkey, [which has MIT Licens
 
 ## Warnings about BIP32
 
+BIP32 is a bad standard. It would be great if we've had something better.
+
 - Network IDs (different currencies) are taken from a single GitHub document
   called SLIP-0044
 - There were new projects, which did not yet have SLIP. Exchanges added support of

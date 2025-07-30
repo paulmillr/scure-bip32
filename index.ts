@@ -17,34 +17,16 @@
  * ```
  */
 /*! scure-bip32 - MIT License (c) 2022 Patricio Palladino, Paul Miller (paulmillr.com) */
-import { mod } from '@noble/curves/abstract/modular.js';
 import { secp256k1 as secp } from '@noble/curves/secp256k1.js';
 import { hmac } from '@noble/hashes/hmac.js';
 import { ripemd160 } from '@noble/hashes/legacy.js';
 import { sha256, sha512 } from '@noble/hashes/sha2.js';
-import {
-  abytes,
-  bytesToHex,
-  concatBytes,
-  createView,
-  hexToBytes,
-  utf8ToBytes,
-} from '@noble/hashes/utils.js';
+import { abytes, concatBytes, createView, utf8ToBytes } from '@noble/hashes/utils.js';
 import { createBase58check } from '@scure/base';
 
-const Point = secp.ProjectivePoint;
+const Point = secp.Point;
+const { Fn } = Point;
 const base58check = createBase58check(sha256);
-
-function bytesToNumber(bytes: Uint8Array): bigint {
-  abytes(bytes);
-  const h = bytes.length === 0 ? '0' : bytesToHex(bytes);
-  return BigInt('0x' + h);
-}
-
-function numberToBytes(num: bigint): Uint8Array {
-  if (typeof num !== 'bigint') throw new Error('bigint expected');
-  return hexToBytes(num.toString(16).padStart(64, '0'));
-}
 
 const MASTER_SECRET = utf8ToBytes('Bitcoin seed');
 
@@ -76,7 +58,7 @@ interface HDKeyOpt {
   parentFingerprint?: number;
   chainCode?: Uint8Array;
   publicKey?: Uint8Array;
-  privateKey?: Uint8Array | bigint;
+  privateKey?: Uint8Array;
 }
 
 /**
@@ -102,13 +84,13 @@ export class HDKey {
     return this.pubHash;
   }
   get privateKey(): Uint8Array | null {
-    return this.privKeyBytes || null;
+    return this._privateKey || null;
   }
   get publicKey(): Uint8Array | null {
-    return this.pubKey || null;
+    return this._publicKey || null;
   }
   get privateExtendedKey(): string {
-    const priv = this.privateKey;
+    const priv = this._privateKey;
     if (!priv) {
       throw new Error('No private key');
     }
@@ -117,10 +99,10 @@ export class HDKey {
     );
   }
   get publicExtendedKey(): string {
-    if (!this.pubKey) {
+    if (!this._publicKey) {
       throw new Error('No public key');
     }
-    return base58check.encode(this.serialize(this.versions.public, this.pubKey));
+    return base58check.encode(this.serialize(this.versions.public, this._publicKey));
   }
 
   public static fromMasterSeed(seed: Uint8Array, versions: Versions = BITCOIN_VERSIONS): HDKey {
@@ -132,11 +114,9 @@ export class HDKey {
       );
     }
     const I = hmac(sha512, MASTER_SECRET, seed);
-    return new HDKey({
-      versions,
-      chainCode: I.slice(32),
-      privateKey: I.slice(0, 32),
-    });
+    const privateKey = I.slice(0, 32);
+    const chainCode = I.slice(32);
+    return new HDKey({ versions, chainCode, privateKey });
   }
 
   public static fromExtendedKey(base58key: string, versions: Versions = BITCOIN_VERSIONS): HDKey {
@@ -166,14 +146,13 @@ export class HDKey {
   public static fromJSON(json: { xpriv: string }): HDKey {
     return HDKey.fromExtendedKey(json.xpriv);
   }
-  public readonly versions: Versions;
-  public readonly depth: number = 0;
-  public readonly index: number = 0;
-  public readonly chainCode: Uint8Array | null = null;
-  public readonly parentFingerprint: number = 0;
-  private privKey?: bigint;
-  private privKeyBytes?: Uint8Array;
-  private pubKey?: Uint8Array;
+  readonly versions: Versions;
+  readonly depth: number = 0;
+  readonly index: number = 0;
+  readonly chainCode: Uint8Array | null = null;
+  readonly parentFingerprint: number = 0;
+  private _privateKey?: Uint8Array;
+  private _publicKey?: Uint8Array;
   private pubHash: Uint8Array | undefined;
 
   constructor(opt: HDKeyOpt) {
@@ -194,19 +173,15 @@ export class HDKey {
       throw new Error('HDKey: publicKey and privateKey at same time.');
     }
     if (opt.privateKey) {
-      if (!secp.utils.isValidPrivateKey(opt.privateKey)) {
-        throw new Error('Invalid private key');
-      }
-      this.privKey =
-        typeof opt.privateKey === 'bigint' ? opt.privateKey : bytesToNumber(opt.privateKey);
-      this.privKeyBytes = numberToBytes(this.privKey);
-      this.pubKey = secp.getPublicKey(opt.privateKey, true);
+      if (!secp.utils.isValidSecretKey(opt.privateKey)) throw new Error('Invalid private key');
+      this._privateKey = opt.privateKey;
+      this._publicKey = secp.getPublicKey(opt.privateKey, true);
     } else if (opt.publicKey) {
-      this.pubKey = Point.fromHex(opt.publicKey).toRawBytes(true); // force compressed point
+      this._publicKey = Point.fromBytes(opt.publicKey).toBytes(true); // force compressed point
     } else {
       throw new Error('HDKey: no public or private key provided');
     }
-    this.pubHash = hash160(this.pubKey);
+    this.pubHash = hash160(this._publicKey);
   }
 
   public derive(path: string): HDKey {
@@ -238,13 +213,13 @@ export class HDKey {
   }
 
   public deriveChild(index: number): HDKey {
-    if (!this.pubKey || !this.chainCode) {
+    if (!this._publicKey || !this.chainCode) {
       throw new Error('No publicKey or chainCode set');
     }
     let data = toU32(index);
     if (index >= HARDENED_OFFSET) {
       // Hardened
-      const priv = this.privateKey;
+      const priv = this._privateKey;
       if (!priv) {
         throw new Error('Could not derive hardened child key');
       }
@@ -252,12 +227,12 @@ export class HDKey {
       data = concatBytes(new Uint8Array([0]), priv, data);
     } else {
       // Normal child: serP(point(kpar)) || ser32(index)
-      data = concatBytes(this.pubKey, data);
+      data = concatBytes(this._publicKey, data);
     }
     const I = hmac(sha512, this.chainCode, data);
-    const childTweak = bytesToNumber(I.slice(0, 32));
+    const childTweak = I.slice(0, 32);
     const chainCode = I.slice(32);
-    if (!secp.utils.isValidPrivateKey(childTweak)) {
+    if (!secp.utils.isValidSecretKey(childTweak)) {
       throw new Error('Tweak bigger than curve order');
     }
     const opt: HDKeyOpt = {
@@ -267,21 +242,22 @@ export class HDKey {
       parentFingerprint: this.fingerprint,
       index,
     };
+    const ctweak = Fn.fromBytes(childTweak);
     try {
       // Private parent key -> private child key
-      if (this.privateKey) {
-        const added = mod(this.privKey! + childTweak, secp.CURVE.n);
-        if (!secp.utils.isValidPrivateKey(added)) {
+      if (this._privateKey) {
+        const added = Fn.create(Fn.fromBytes(this._privateKey) + ctweak);
+        if (!Fn.isValidNot0(added)) {
           throw new Error('The tweak was out of range or the resulted private key is invalid');
         }
-        opt.privateKey = added;
+        opt.privateKey = Fn.toBytes(added);
       } else {
-        const added = Point.fromHex(this.pubKey).add(Point.fromPrivateKey(childTweak));
+        const added = Point.fromBytes(this._publicKey).add(Point.BASE.multiply(ctweak));
         // Cryptographically impossible: hmac-sha512 preimage would need to be found
         if (added.equals(Point.ZERO)) {
           throw new Error('The tweak was equal to negative P, which made the result key invalid');
         }
-        opt.publicKey = added.toRawBytes(true);
+        opt.publicKey = added.toBytes(true);
       }
       return new HDKey(opt);
     } catch (err) {
@@ -290,33 +266,26 @@ export class HDKey {
   }
 
   public sign(hash: Uint8Array): Uint8Array {
-    if (!this.privateKey) {
+    if (!this._privateKey) {
       throw new Error('No privateKey set!');
     }
     abytes(hash, 32);
-    return secp.sign(hash, this.privKey!).toCompactRawBytes();
+    return secp.sign(hash, this._privateKey, { prehash: false });
   }
 
   public verify(hash: Uint8Array, signature: Uint8Array): boolean {
     abytes(hash, 32);
     abytes(signature, 64);
-    if (!this.publicKey) {
+    if (!this._publicKey) {
       throw new Error('No publicKey set!');
     }
-    let sig;
-    try {
-      sig = secp.Signature.fromCompact(signature);
-    } catch (error) {
-      return false;
-    }
-    return secp.verify(sig, hash, this.publicKey);
+    return secp.verify(signature, hash, this._publicKey, { prehash: false });
   }
 
   public wipePrivateData(): this {
-    this.privKey = undefined;
-    if (this.privKeyBytes) {
-      this.privKeyBytes.fill(0);
-      this.privKeyBytes = undefined;
+    if (this._privateKey) {
+      this._privateKey.fill(0);
+      this._privateKey = undefined;
     }
     return this;
   }
