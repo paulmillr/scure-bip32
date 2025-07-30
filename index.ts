@@ -105,7 +105,7 @@ export class HDKey {
     return base58check.encode(this.serialize(this.versions.public, this._publicKey));
   }
 
-  public static fromMasterSeed(seed: Uint8Array, versions: Versions = BITCOIN_VERSIONS): HDKey {
+  static fromMasterSeed(seed: Uint8Array, versions: Versions = BITCOIN_VERSIONS): HDKey {
     abytes(seed);
     if (8 * seed.length < 128 || 8 * seed.length > 512) {
       throw new Error(
@@ -119,7 +119,7 @@ export class HDKey {
     return new HDKey({ versions, chainCode, privateKey });
   }
 
-  public static fromExtendedKey(base58key: string, versions: Versions = BITCOIN_VERSIONS): HDKey {
+  static fromExtendedKey(base58key: string, versions: Versions = BITCOIN_VERSIONS): HDKey {
     // => version(4) || depth(1) || fingerprint(4) || index(4) || chain(32) || key(33)
     const keyBuffer: Uint8Array = base58check.decode(base58key);
     const keyView = createView(keyBuffer);
@@ -184,7 +184,7 @@ export class HDKey {
     this.pubHash = hash160(this._publicKey);
   }
 
-  public derive(path: string): HDKey {
+  derive(path: string): HDKey {
     if (!/^[mM]'?/.test(path)) {
       throw new Error('Path must start with "m" or "M"');
     }
@@ -212,7 +212,7 @@ export class HDKey {
     return child;
   }
 
-  public deriveChild(index: number): HDKey {
+  deriveChild(index: number): HDKey {
     if (!this._publicKey || !this.chainCode) {
       throw new Error('No publicKey or chainCode set');
     }
@@ -265,7 +265,7 @@ export class HDKey {
     }
   }
 
-  public sign(hash: Uint8Array): Uint8Array {
+  sign(hash: Uint8Array): Uint8Array {
     if (!this._privateKey) {
       throw new Error('No privateKey set!');
     }
@@ -273,7 +273,7 @@ export class HDKey {
     return secp.sign(hash, this._privateKey, { prehash: false });
   }
 
-  public verify(hash: Uint8Array, signature: Uint8Array): boolean {
+  verify(hash: Uint8Array, signature: Uint8Array): boolean {
     abytes(hash, 32);
     abytes(signature, 64);
     if (!this._publicKey) {
@@ -282,14 +282,14 @@ export class HDKey {
     return secp.verify(signature, hash, this._publicKey, { prehash: false });
   }
 
-  public wipePrivateData(): this {
+  wipePrivateData(): this {
     if (this._privateKey) {
       this._privateKey.fill(0);
       this._privateKey = undefined;
     }
     return this;
   }
-  public toJSON(): { xpriv: string; xpub: string } {
+  toJSON(): { xpriv: string; xpub: string } {
     return {
       xpriv: this.privateExtendedKey,
       xpub: this.publicExtendedKey,
