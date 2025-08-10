@@ -21,14 +21,14 @@ import { secp256k1 as secp } from '@noble/curves/secp256k1.js';
 import { hmac } from '@noble/hashes/hmac.js';
 import { ripemd160 } from '@noble/hashes/legacy.js';
 import { sha256, sha512 } from '@noble/hashes/sha2.js';
-import { abytes, concatBytes, createView, utf8ToBytes } from '@noble/hashes/utils.js';
+import { abytes, concatBytes, createView } from '@noble/hashes/utils.js';
 import { createBase58check } from '@scure/base';
 
 const Point = secp.Point;
 const { Fn } = Point;
 const base58check = createBase58check(sha256);
 
-const MASTER_SECRET = utf8ToBytes('Bitcoin seed');
+const MASTER_SECRET = Uint8Array.from('Bitcoin seed'.split(''), char => char.charCodeAt(0));
 
 /** Network-specific versioning. */
 export interface Versions {
@@ -42,7 +42,7 @@ export const HARDENED_OFFSET: number = 0x80000000;
 
 const hash160 = (data: Uint8Array) => ripemd160(sha256(data));
 const fromU32 = (data: Uint8Array) => createView(data).getUint32(0, false);
-const toU32 = (n: number) => {
+const toU32 = (n: number): Uint8Array => {
   if (!Number.isSafeInteger(n) || n < 0 || n > 2 ** 32 - 1) {
     throw new Error('invalid number, should be from 0 to 2**32-1, got ' + n);
   }
