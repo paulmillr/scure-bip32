@@ -3,16 +3,12 @@
   "version": "1.7.0",
   "description": "Secure, audited & minimal implementation of BIP32 hierarchical deterministic (HD) wallets over secp256k1",
   "files": [
-    "index.ts",
     "index.js",
     "index.js.map",
     "index.d.ts",
-    "index.d.ts.map"
+    "index.d.ts.map",
+    "index.ts"
   ],
-  "type": "module",
-  "main": "./index.js",
-  "module": "./index.js",
-  "types": "./index.d.ts",
   "dependencies": {
     "@noble/curves": "2.0.0-beta.2",
     "@noble/hashes": "2.0.0-beta.4",
@@ -24,14 +20,6 @@
     "prettier": "3.6.2",
     "typescript": "5.9.2"
   },
-  "sideEffects": false,
-  "author": "Paul Miller (https://paulmillr.com)",
-  "homepage": "https://paulmillr.com/noble/#scure",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/paulmillr/scure-bip32.git"
-  },
-  "license": "MIT",
   "scripts": {
     "build": "tsc",
     "build:release": "npx --no @paulmillr/jsbt esbuild test/build",
@@ -55,5 +43,17 @@
     "phrase",
     "code"
   ],
-  "funding": "https://paulmillr.com/funding/"
+  "homepage": "https://paulmillr.com/noble/#scure",
+  "funding": "https://paulmillr.com/funding/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/paulmillr/scure-bip32.git"
+  },
+  "type": "module",
+  "main": "index.js",
+  "module": "index.js",
+  "types": "index.d.ts",
+  "sideEffects": false,
+  "author": "Paul Miller (https://paulmillr.com)",
+  "license": "MIT"
 }
