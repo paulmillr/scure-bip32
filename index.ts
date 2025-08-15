@@ -28,7 +28,7 @@ const Point = secp.Point;
 const { Fn } = Point;
 const base58check = createBase58check(sha256);
 
-const MASTER_SECRET = Uint8Array.from('Bitcoin seed'.split(''), char => char.charCodeAt(0));
+const MASTER_SECRET = Uint8Array.from('Bitcoin seed'.split(''), (char) => char.charCodeAt(0));
 
 /** Network-specific versioning. */
 export interface Versions {
@@ -95,7 +95,7 @@ export class HDKey {
       throw new Error('No private key');
     }
     return base58check.encode(
-      this.serialize(this.versions.private, concatBytes(new Uint8Array([0]), priv))
+      this.serialize(this.versions.private, concatBytes(Uint8Array.of(0), priv))
     );
   }
   get publicExtendedKey(): string {
@@ -224,7 +224,7 @@ export class HDKey {
         throw new Error('Could not derive hardened child key');
       }
       // Hardened child: 0x00 || ser256(kpar) || ser32(index)
-      data = concatBytes(new Uint8Array([0]), priv, data);
+      data = concatBytes(Uint8Array.of(0), priv, data);
     } else {
       // Normal child: serP(point(kpar)) || ser32(index)
       data = concatBytes(this._publicKey, data);
