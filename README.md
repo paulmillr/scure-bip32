@@ -36,8 +36,6 @@ Notice [Warnings about BIP32](#warnings-about-bip32).
 
 > `deno add jsr:@scure/bip32`
 
-> `deno doc jsr:@scure/bip32` # command-line documentation
-
 This module exports a single class `HDKey`, which should be used like this:
 
 ```ts
