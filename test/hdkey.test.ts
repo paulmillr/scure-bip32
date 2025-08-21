@@ -555,6 +555,55 @@ describe('hdkey', () => {
       }
     });
   });
+  it('Should throw an error when constructing a key of excesive depth', () => {
+    const seed = '000102030405060708090a0b0c0d0e0f';
+    var hdkey = HDKey.fromMasterSeed(hexToBytes(seed));
+
+    const optMaxDepth = {
+      versions: hdkey.versions,
+      chainCode: hdkey.chainCode,
+      // The depth is the maximum 255
+      depth: 255,
+      parentFingerprint: hdkey.fingerprint,
+      index: 0,
+      privateKey: hdkey.privateKey,
+    };
+    // no errors
+    new HDKey(optMaxDepth);
+
+    // Craft whatever key, but with excesive depth
+    const optTooDeep = {
+      versions: hdkey.versions,
+      chainCode: hdkey.chainCode,
+      // The depth is exceeding 255
+      depth: 256,
+      parentFingerprint: hdkey.fingerprint,
+      index: 0,
+      privateKey: hdkey.privateKey,
+    };
+    throws(() => new HDKey(optTooDeep));
+  });
+  it('Should throw an error when deriving keys of 256 depth', () => {
+    const seed = '000102030405060708090a0b0c0d0e0f';
+    var hdkey = HDKey.fromMasterSeed(hexToBytes(seed));
+
+    // deriving 255 children should work
+    for (let i = 0; i < 255; i++) {
+      hdkey = hdkey.deriveChild(0);
+    }
+    // deriving one more shall throw an error
+    throws(() => hdkey.deriveChild(0));
+  });
+  it('Should throw an error when deriving from path of length 256', () => {
+    const seed = '000102030405060708090a0b0c0d0e0f';
+    var hdkey = HDKey.fromMasterSeed(hexToBytes(seed));
+
+    // master key "lives" at 0th level, together with 255
+    // more level its 256, which is still serializable
+    hdkey.derive('m' + '/0'.repeat(255));
+    // but deriving one level deeper fails.
+    throws(() => hdkey.derive('m' + '/0'.repeat(256)));
+  });
 });
 
 it.runWhen(import.meta.url);

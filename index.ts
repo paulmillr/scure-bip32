@@ -169,6 +169,9 @@ export class HDKey {
         throw new Error('HDKey: zero depth with non-zero index/parent fingerprint');
       }
     }
+    if (this.depth > 255) {
+      throw new Error('HDKey: depth exceeds the serializable value 255');
+    }
     if (opt.publicKey && opt.privateKey) {
       throw new Error('HDKey: publicKey and privateKey at same time.');
     }
