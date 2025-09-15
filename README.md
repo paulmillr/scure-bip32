@@ -4,7 +4,7 @@ Audited & minimal implementation of BIP32 hierarchical deterministic (HD) wallet
 
 - 🔒 [Audited](#security) by an independent security firm
 - 🔻 Tree-shakeable: unused code is excluded from your builds
-- 📦 ESM and common.js
+- 📦 ESM
 - ➰ Only 3 audited dependencies by the same author:
   [noble-curves](https://github.com/paulmillr/noble-curves),
   [noble-hashes](https://github.com/paulmillr/noble-hashes),
