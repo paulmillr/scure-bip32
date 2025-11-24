@@ -245,6 +245,10 @@ export class HDKey {
       parentFingerprint: this.fingerprint,
       index,
     };
+    // Fail early instead of re-trying different index
+    if (opt.depth! > 255) {
+      throw new Error('HDKey: depth exceeds the serializable value 255');
+    }
     const ctweak = Fn.fromBytes(childTweak);
     try {
       // Private parent key -> private child key
