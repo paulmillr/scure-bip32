@@ -40,16 +40,22 @@ This module exports a single class `HDKey`, which should be used like this:
 
 ```ts
 import { HDKey } from '@scure/bip32';
-const hdkey1 = HDKey.fromMasterSeed(seed);
-const hdkey2 = HDKey.fromExtendedKey(base58key);
-const hdkey3 = HDKey.fromJSON({ xpriv: string });
+import { sha256 } from '@noble/hashes/sha2.js';
+import { randomBytes } from '@noble/hashes/utils.js';
+
+const seed = randomBytes(32);
+const root = HDKey.fromMasterSeed(seed);
+const base58key = root.privateExtendedKey;
+const restored = HDKey.fromExtendedKey(base58key);
+const fromJson = HDKey.fromJSON({ xpriv: base58key });
+const child = fromJson.derive("m/0/2147483647'/1");
+const msgHash = sha256(new TextEncoder().encode('hello scure-bip32'));
 
 // props
-[hdkey1.depth, hdkey1.index, hdkey1.chainCode];
-console.log(hdkey2.privateKey, hdkey2.publicKey);
-console.log(hdkey3.derive("m/0/2147483647'/1"));
-const sig = hdkey3.sign(hash);
-hdkey3.verify(hash, sig);
+[root.depth, root.index, root.chainCode];
+[restored.privateKey, restored.publicKey];
+const sig = child.sign(msgHash);
+child.verify(msgHash, sig);
 ```
 
 Note: `chainCode` property is essentially a private part

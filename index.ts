@@ -4,16 +4,21 @@
  * @example
  * ```js
  * import { HDKey } from "@scure/bip32";
- * const hdkey1 = HDKey.fromMasterSeed(seed);
- * const hdkey2 = HDKey.fromExtendedKey(base58key);
- * const hdkey3 = HDKey.fromJSON({ xpriv: string });
+ * import { sha256 } from '@noble/hashes/sha2.js';
+ * import { randomBytes } from '@noble/hashes/utils.js';
+ * const seed = randomBytes(32);
+ * const root = HDKey.fromMasterSeed(seed);
+ * const base58key = root.privateExtendedKey;
+ * const restored = HDKey.fromExtendedKey(base58key);
+ * const fromJson = HDKey.fromJSON({ xpriv: base58key });
+ * const child = fromJson.derive("m/0/2147483647'/1");
+ * const msgHash = sha256(new TextEncoder().encode('hello scure-bip32'));
  *
  * // props
- * [hdkey1.depth, hdkey1.index, hdkey1.chainCode];
- * console.log(hdkey2.privateKey, hdkey2.publicKey);
- * console.log(hdkey3.derive("m/0/2147483647'/1"));
- * const sig = hdkey3.sign(hash);
- * hdkey3.verify(hash, sig);
+ * [root.depth, root.index, root.chainCode];
+ * [restored.privateKey, restored.publicKey];
+ * const sig = child.sign(msgHash);
+ * child.verify(msgHash, sig);
  * ```
  */
 /*! scure-bip32 - MIT License (c) 2022 Patricio Palladino, Paul Miller (paulmillr.com) */
@@ -24,28 +29,32 @@ import { sha256, sha512 } from '@noble/hashes/sha2.js';
 import { abytes, concatBytes, createView } from '@noble/hashes/utils.js';
 import { createBase58check } from '@scure/base';
 
-const Point = secp.Point;
-const { Fn } = Point;
-const base58check = createBase58check(sha256);
+const Point = /* @__PURE__ */ (() => secp.Point)();
+const Fn = /* @__PURE__ */ (() => Point.Fn)();
+const base58check = /* @__PURE__ */ createBase58check(sha256);
+const MASTER_SECRET = /* @__PURE__ */ (() => {
+  return Uint8Array.from('Bitcoin seed'.split(''), (char) => char.charCodeAt(0));
+})();
 
-const MASTER_SECRET = Uint8Array.from('Bitcoin seed'.split(''), (char) => char.charCodeAt(0));
-
-/** Network-specific versioning. */
+/** Network-specific BIP32 version bytes. */
 export interface Versions {
+  /** 4-byte version used when serializing private extended keys. */
   private: number;
+  /** 4-byte version used when serializing public extended keys. */
   public: number;
 }
 
 const BITCOIN_VERSIONS: Versions = { private: 0x0488ade4, public: 0x0488b21e };
-/** Hardened offset from Bitcoin, default */
+/** Hardened child index offset from BIP32. */
 export const HARDENED_OFFSET: number = 0x80000000;
 
 const hash160 = (data: Uint8Array) => ripemd160(sha256(data));
 const fromU32 = (data: Uint8Array) => createView(data).getUint32(0, false);
 const toU32 = (n: number): Uint8Array => {
-  if (!Number.isSafeInteger(n) || n < 0 || n > 2 ** 32 - 1) {
-    throw new Error('invalid number, should be from 0 to 2**32-1, got ' + n);
-  }
+  if (typeof n !== 'number')
+    throw new TypeError('invalid number, should be from 0 to 2**32-1, got ' + n);
+  if (!Number.isSafeInteger(n) || n < 0 || n > 2 ** 32 - 1)
+    throw new RangeError('invalid number, should be from 0 to 2**32-1, got ' + n);
   const buf = new Uint8Array(4);
   createView(buf).setUint32(0, n, false);
   return buf;
@@ -63,12 +72,17 @@ interface HDKeyOpt {
 
 /**
  * HDKey from BIP32
+ * @param opt - Node fields used to construct one HDKey instance.
  * @example
-```js
-const hdkey1 = HDKey.fromMasterSeed(seed);
-const hdkey2 = HDKey.fromExtendedKey(base58key);
-const hdkey3 = HDKey.fromJSON({ xpriv: string });
-```
+ * ```js
+ * import { HDKey } from '@scure/bip32';
+ * import { randomBytes } from '@noble/hashes/utils.js';
+ *
+ * const seed = randomBytes(32);
+ * const root = HDKey.fromMasterSeed(seed);
+ * const account0 = root.derive("m/0/1'");
+ * account0.publicKey;
+ * ```
  */
 export class HDKey {
   get fingerprint(): number {
@@ -108,7 +122,7 @@ export class HDKey {
   static fromMasterSeed(seed: Uint8Array, versions: Versions = BITCOIN_VERSIONS): HDKey {
     abytes(seed);
     if (8 * seed.length < 128 || 8 * seed.length > 512) {
-      throw new Error(
+      throw new RangeError(
         'HDKey: seed length must be between 128 and 512 bits; 256 bits is advised, got ' +
           seed.length
       );
