@@ -1,1 +1,1 @@
-export { HDKey } from 'lib';
+export { HDKey } from '@scure/bip32';

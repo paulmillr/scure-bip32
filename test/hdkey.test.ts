@@ -422,6 +422,31 @@ describe('hdkey', () => {
       throws(() => hdkey.derive(t));
     }
   });
+  it('should use validator constructors', () => {
+    let err: unknown;
+    try {
+      HDKey.fromMasterSeed(new Uint8Array(1));
+    } catch (e) {
+      err = e;
+    }
+    deepStrictEqual(err instanceof RangeError, true, 'seed length');
+
+    err = undefined;
+    try {
+      HDKey.fromMasterSeed(hexToBytes(fixtures[0].seed)).deriveChild(1.5 as any);
+    } catch (e) {
+      err = e;
+    }
+    deepStrictEqual(err instanceof RangeError, true, 'child range');
+
+    err = undefined;
+    try {
+      HDKey.fromMasterSeed(hexToBytes(fixtures[0].seed)).deriveChild('1' as any);
+    } catch (e) {
+      err = e;
+    }
+    deepStrictEqual(err instanceof TypeError, true, 'child type');
+  });
   // https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
   describe('Spec test vectors', () => {
     it('Test Vector 1', () => {
