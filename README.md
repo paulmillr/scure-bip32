@@ -119,9 +119,12 @@ BIP32 is a bad standard. It would be great if we've had something better.
 
 ## Security
 
-The library has been independently audited:
+The library has been audited:
 
-- at version 1.0.1, in Jan 2022, by [cure53](https://cure53.de)
+- at version 2.2.0, in Apr 2026, by ourselves (self-audited)
+  - Scope: everything
+  - [Changes since audit](https://github.com/paulmillr/scure-bip32/compare/2.2.0..main)
+- at version 1.0.1, in Jan 2022, independently, by [cure53](https://cure53.de)
   - PDFs: [online](https://cure53.de/pentest-report_hashing-libs.pdf), [offline](./audit/2022-01-05-cure53-audit-nbl2.pdf)
   - [Changes since audit](https://github.com/paulmillr/scure-bip32/compare/1.0.0..main).
   - The audit has been funded by [Ethereum Foundation](https://ethereum.org/en/) with help of [Nomic Labs](https://nomiclabs.io)

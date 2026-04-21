@@ -1,6 +1,6 @@
 {
   "name": "@scure/bip32",
-  "version": "2.0.1",
+  "version": "2.2.0",
   "description": "Secure, audited & minimal implementation of BIP32 hierarchical deterministic (HD) wallets over secp256k1",
   "files": [
     "index.js",
@@ -12,7 +12,7 @@
   "dependencies": {
     "@noble/curves": "2.2.0",
     "@noble/hashes": "2.2.0",
-    "@scure/base": "2.0.0"
+    "@scure/base": "2.2.0"
   },
   "devDependencies": {
     "@paulmillr/jsbt": "0.5.0",
