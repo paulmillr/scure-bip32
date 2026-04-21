@@ -26,7 +26,7 @@ import { secp256k1 as secp } from '@noble/curves/secp256k1.js';
 import { hmac } from '@noble/hashes/hmac.js';
 import { ripemd160 } from '@noble/hashes/legacy.js';
 import { sha256, sha512 } from '@noble/hashes/sha2.js';
-import { abytes, concatBytes, createView } from '@noble/hashes/utils.js';
+import { abytes, concatBytes, createView, type TArg, type TRet } from '@noble/hashes/utils.js';
 import { createBase58check } from '@scure/base';
 
 const Point = /* @__PURE__ */ (() => secp.Point)();
@@ -48,9 +48,9 @@ const BITCOIN_VERSIONS: Versions = { private: 0x0488ade4, public: 0x0488b21e };
 /** Hardened child index offset from BIP32. */
 export const HARDENED_OFFSET: number = 0x80000000;
 
-const hash160 = (data: Uint8Array) => ripemd160(sha256(data));
-const fromU32 = (data: Uint8Array) => createView(data).getUint32(0, false);
-const toU32 = (n: number): Uint8Array => {
+const hash160 = (data: TArg<Uint8Array>) => ripemd160(sha256(data));
+const fromU32 = (data: TArg<Uint8Array>) => createView(data).getUint32(0, false);
+const toU32 = (n: number): TRet<Uint8Array> => {
   if (typeof n !== 'number')
     throw new TypeError('invalid number, should be from 0 to 2**32-1, got ' + n);
   if (!Number.isSafeInteger(n) || n < 0 || n > 2 ** 32 - 1)
@@ -97,6 +97,8 @@ export class HDKey {
   get pubKeyHash(): Uint8Array | undefined {
     return this.pubHash;
   }
+  // Returns the live private key buffer for this instance.
+  // Copy it first if you need an immutable snapshot.
   get privateKey(): Uint8Array | null {
     return this._privateKey || null;
   }
@@ -175,7 +177,7 @@ export class HDKey {
     }
     this.versions = opt.versions || BITCOIN_VERSIONS;
     this.depth = opt.depth || 0;
-    this.chainCode = opt.chainCode || null;
+    this.chainCode = opt.chainCode ? Uint8Array.from(opt.chainCode) : null;
     this.index = opt.index || 0;
     this.parentFingerprint = opt.parentFingerprint || 0;
     if (!this.depth) {
@@ -191,8 +193,9 @@ export class HDKey {
     }
     if (opt.privateKey) {
       if (!secp.utils.isValidSecretKey(opt.privateKey)) throw new Error('Invalid private key');
-      this._privateKey = opt.privateKey;
-      this._publicKey = secp.getPublicKey(opt.privateKey, true);
+      // Don't alias caller-owned secret buffers.
+      this._privateKey = Uint8Array.from(opt.privateKey);
+      this._publicKey = secp.getPublicKey(this._privateKey, true);
     } else if (opt.publicKey) {
       this._publicKey = Point.fromBytes(opt.publicKey).toBytes(true); // force compressed point
     } else {
@@ -229,7 +232,10 @@ export class HDKey {
     return child;
   }
 
-  deriveChild(index: number): HDKey {
+  /**
+   * @param _I - Test-only override for the 64-byte HMAC-SHA512 output; normal callers must omit it.
+   */
+  deriveChild(index: number, _I?: Uint8Array): HDKey {
     if (!this._publicKey || !this.chainCode) {
       throw new Error('No publicKey or chainCode set');
     }
@@ -246,12 +252,10 @@ export class HDKey {
       // Normal child: serP(point(kpar)) || ser32(index)
       data = concatBytes(this._publicKey, data);
     }
-    const I = hmac(sha512, this.chainCode, data);
-    const childTweak = I.slice(0, 32);
-    const chainCode = I.slice(32);
-    if (!secp.utils.isValidSecretKey(childTweak)) {
-      throw new Error('Tweak bigger than curve order');
-    }
+    const out = _I || hmac(sha512, this.chainCode, data);
+    abytes(out, 64);
+    const childTweak = out.slice(0, 32);
+    const chainCode = out.slice(32);
     const opt: HDKeyOpt = {
       versions: this.versions,
       chainCode,
@@ -263,9 +267,11 @@ export class HDKey {
     if (opt.depth! > 255) {
       throw new Error('HDKey: depth exceeds the serializable value 255');
     }
-    const ctweak = Fn.fromBytes(childTweak);
     try {
-      // Private parent key -> private child key
+      const ctweak = Fn.fromBytes(childTweak);
+      // BIP-32 private derivation retries only when parse256(I_L) >= n or k_i = 0.
+      // BIP-32 public derivation retries only when parse256(I_L) >= n or K_i is infinity.
+      // So I_L = 0 is valid here; Fn.fromBytes still rejects parse256(I_L) >= n.
       if (this._privateKey) {
         const added = Fn.create(Fn.fromBytes(this._privateKey) + ctweak);
         if (!Fn.isValidNot0(added)) {
@@ -273,7 +279,8 @@ export class HDKey {
         }
         opt.privateKey = Fn.toBytes(added);
       } else {
-        const added = Point.fromBytes(this._publicKey).add(Point.BASE.multiply(ctweak));
+        const point = Point.fromBytes(this._publicKey);
+        const added = ctweak === 0n ? point : point.add(Point.BASE.multiply(ctweak));
         // Cryptographically impossible: hmac-sha512 preimage would need to be found
         if (added.equals(Point.ZERO)) {
           throw new Error('The tweak was equal to negative P, which made the result key invalid');
@@ -333,3 +340,14 @@ export class HDKey {
     );
   }
 }
+
+type Tests = Readonly<{
+  deriveChildWithI(key: TArg<HDKey>, index: number, I: TArg<Uint8Array>): TRet<HDKey>;
+}>;
+
+export const __TESTS: TRet<Tests> = /* @__PURE__ */ Object.freeze({
+  deriveChildWithI(key: TArg<HDKey>, index: number, I: TArg<Uint8Array>): TRet<HDKey> {
+    // Bytes wrappers widen the exported test seam, but deriveChild still needs concrete inputs.
+    return (key as HDKey).deriveChild(index, I as Uint8Array) as TRet<HDKey>;
+  },
+});

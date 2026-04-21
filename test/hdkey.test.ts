@@ -1,7 +1,7 @@
 import { secp256k1 as secp } from '@noble/curves/secp256k1.js';
 import { hexToBytes, bytesToHex as toHex } from '@noble/hashes/utils.js';
 import { describe, it } from '@paulmillr/jsbt/test.js';
-import { HARDENED_OFFSET, HDKey } from '../index.ts';
+import { __TESTS, HARDENED_OFFSET, HDKey } from '../index.ts';
 import { deepStrictEqual, throws } from './assert.ts';
 // https://github.com/cryptocoinjs/hdkey/blob/42637e381bdef0c8f785b14f5b66a80dad969514/test/fixtures/hdkey.json
 const fixtures = [
@@ -413,6 +413,53 @@ describe('hdkey', () => {
       const hdkey = HDKey.fromExtendedKey(fixtures[0].public);
       hdkey.wipePrivateData();
       deepStrictEqual(hdkey.publicExtendedKey, fixtures[0].public);
+    });
+
+    it('should not zero privateKey bytes shared with another instance', () => {
+      const root = HDKey.fromMasterSeed(hexToBytes(fixtures[0].seed));
+      const privateKey = root.privateKey!;
+      const original = Uint8Array.from(privateKey);
+      const clone = new HDKey({
+        versions: root.versions,
+        depth: root.depth,
+        index: root.index,
+        parentFingerprint: root.parentFingerprint,
+        chainCode: root.chainCode!,
+        privateKey,
+      });
+
+      clone.wipePrivateData();
+
+      deepStrictEqual(privateKey, original);
+      deepStrictEqual(root.privateKey!, original);
+    });
+  });
+  describe('> when child tweak is zero', () => {
+    it('should keep valid private and public children instead of rejecting them', () => {
+      const parentKey = Uint8Array.from({ length: 32 }, (_, i) => i + 1);
+      const parent = new HDKey({
+        versions: { private: 0x0488ade4, public: 0x0488b21e },
+        depth: 0,
+        index: 0,
+        parentFingerprint: 0,
+        chainCode: new Uint8Array(32).fill(7),
+        privateKey: parentKey,
+      });
+      const publicParent = new HDKey({
+        versions: parent.versions,
+        depth: parent.depth,
+        index: parent.index,
+        parentFingerprint: parent.parentFingerprint,
+        chainCode: parent.chainCode!,
+        publicKey: parent.publicKey!,
+      });
+      const child = __TESTS.deriveChildWithI(parent, 0, new Uint8Array(64));
+      const publicChild = __TESTS.deriveChildWithI(publicParent, 0, new Uint8Array(64));
+
+      deepStrictEqual(child.privateKey, parent.privateKey);
+      deepStrictEqual(child.chainCode, new Uint8Array(32));
+      deepStrictEqual(publicChild.publicKey, publicParent.publicKey);
+      deepStrictEqual(publicChild.chainCode, new Uint8Array(32));
     });
   });
   it('should throw on derive of wrong indexes', () => {
