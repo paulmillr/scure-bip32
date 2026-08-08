@@ -1,6 +1,6 @@
 {
   "name": "@scure/bip32",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "exports": "./index.ts",
   "imports": {
     "@noble/curves": "jsr:@noble/curves@2.3.0",
