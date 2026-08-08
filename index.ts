@@ -50,14 +50,20 @@ export const HARDENED_OFFSET: number = 0x80000000;
 
 const hash160 = (data: TArg<Uint8Array>) => ripemd160(sha256(data));
 const fromU32 = (data: TArg<Uint8Array>) => createView(data).getUint32(0, false);
-const toU32 = (n: number): TRet<Uint8Array> => {
+const toU32 = (n: number, title: string = 'number'): TRet<Uint8Array> => {
   if (typeof n !== 'number')
-    throw new TypeError('invalid number, should be from 0 to 2**32-1, got ' + n);
+    throw new TypeError(`"${title}" expected number, got type=${typeof n}`);
   if (!Number.isSafeInteger(n) || n < 0 || n > 2 ** 32 - 1)
-    throw new RangeError('invalid number, should be from 0 to 2**32-1, got ' + n);
+    throw new RangeError(`"${title}" expected integer in range 0..2**32-1, got ${n}`);
   const buf = new Uint8Array(4);
   createView(buf).setUint32(0, n, false);
   return buf;
+};
+const validateVersions = (versions: TArg<Versions>, title: string = 'versions'): Versions => {
+  if (!(typeof versions === 'object' && versions !== null)) throw new Error('versions must be an object');
+  toU32((versions as Versions).private, `${title}.private`);
+  toU32((versions as Versions).public, `${title}.public`);
+  return versions as Versions;
 };
 
 interface HDKeyOpt {
@@ -123,6 +129,7 @@ export class HDKey {
 
   static fromMasterSeed(seed: Uint8Array, versions: Versions = BITCOIN_VERSIONS): HDKey {
     abytes(seed);
+    versions = validateVersions(versions);
     if (8 * seed.length < 128 || 8 * seed.length > 512) {
       throw new RangeError(
         'HDKey: seed length must be between 128 and 512 bits; 256 bits is advised, got ' +
@@ -136,6 +143,7 @@ export class HDKey {
   }
 
   static fromExtendedKey(base58key: string, versions: Versions = BITCOIN_VERSIONS): HDKey {
+    versions = validateVersions(versions);
     // => version(4) || depth(1) || fingerprint(4) || index(4) || chain(32) || key(33)
     const keyBuffer: Uint8Array = base58check.decode(base58key);
     const keyView = createView(keyBuffer);
@@ -175,7 +183,7 @@ export class HDKey {
     if (!opt || typeof opt !== 'object') {
       throw new Error('HDKey.constructor must not be called directly');
     }
-    this.versions = opt.versions || BITCOIN_VERSIONS;
+    this.versions = opt.versions ? validateVersions(opt.versions) : BITCOIN_VERSIONS;
     this.depth = opt.depth || 0;
     this.chainCode = opt.chainCode ? Uint8Array.from(opt.chainCode) : null;
     this.index = opt.index || 0;
@@ -239,7 +247,7 @@ export class HDKey {
     if (!this._publicKey || !this.chainCode) {
       throw new Error('No publicKey or chainCode set');
     }
-    let data = toU32(index);
+    let data = toU32(index, 'index');
     if (index >= HARDENED_OFFSET) {
       // Hardened
       const priv = this._privateKey;
@@ -331,10 +339,10 @@ export class HDKey {
     abytes(key, 33);
     // version(4) || depth(1) || fingerprint(4) || index(4) || chain(32) || key(33)
     return concatBytes(
-      toU32(version),
+      toU32(version, 'version'),
       new Uint8Array([this.depth]),
-      toU32(this.parentFingerprint),
-      toU32(this.index),
+      toU32(this.parentFingerprint, 'parentFingerprint'),
+      toU32(this.index, 'index'),
       this.chainCode,
       key
     );
