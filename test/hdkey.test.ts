@@ -1,8 +1,11 @@
 import { secp256k1 as secp } from '@noble/curves/secp256k1.js';
 import { hexToBytes, bytesToHex as toHex } from '@noble/hashes/utils.js';
+import { sha256 } from '@noble/hashes/sha2.js';
 import { describe, it } from '@paulmillr/jsbt/test.js';
+import { createBase58check } from '@scure/base';
 import { __TESTS, HARDENED_OFFSET, HDKey } from '../index.ts';
 import { deepStrictEqual, throws } from './assert.ts';
+const base58check = createBase58check(sha256);
 // https://github.com/cryptocoinjs/hdkey/blob/42637e381bdef0c8f785b14f5b66a80dad969514/test/fixtures/hdkey.json
 const fixtures = [
   {
@@ -205,6 +208,37 @@ describe('hdkey', () => {
   });
 
   describe('+ fromExtendedKey()', () => {
+    it('should reject checksum-valid payloads that are not 78 bytes', () => {
+      const payload = base58check.decode(fixtures[0].private);
+      const tooLong = new Uint8Array(payload.length + 1);
+      tooLong.set(payload);
+      for (const invalid of [payload.slice(0, -1), tooLong]) {
+        let error: unknown;
+        try {
+          HDKey.fromExtendedKey(base58check.encode(invalid));
+        } catch (err) {
+          error = err;
+        }
+        deepStrictEqual(
+          (error as Error).message,
+          `HDKey: invalid extended key length: expected 78 bytes, got ${invalid.length}`
+        );
+      }
+    });
+
+    it('should reject invalid chain code lengths', () => {
+      const root = HDKey.fromMasterSeed(hexToBytes(fixtures[0].seed));
+      for (const length of [31, 33]) {
+        throws(
+          () =>
+            new HDKey({
+              chainCode: new Uint8Array(length),
+              privateKey: root.privateKey!,
+            })
+        );
+      }
+    });
+
     describe('> when private', () => {
       it('should parse it', () => {
         // m/0/2147483647'/1/2147483646'/2
@@ -462,6 +496,65 @@ describe('hdkey', () => {
       deepStrictEqual(publicChild.chainCode, new Uint8Array(32));
     });
   });
+  describe('> when child derivation must retry', () => {
+    const invalidTweak = hexToBytes(
+      'fffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141'
+    );
+    const withTweak = (tweak: Uint8Array): Uint8Array => {
+      const I = new Uint8Array(64);
+      I.set(tweak);
+      return I;
+    };
+
+    it('should retry only BIP-32 invalid-child conditions', () => {
+      const parent = HDKey.fromMasterSeed(hexToBytes(fixtures[0].seed));
+      const publicParent = HDKey.fromExtendedKey(parent.publicExtendedKey);
+      const negativeParent = secp.Point.Fn.toBytes(
+        secp.Point.Fn.neg(secp.Point.Fn.fromBytes(parent.privateKey!))
+      );
+
+      for (const key of [parent, publicParent]) {
+        const expected = key.deriveChild(1);
+        const outOfRange = __TESTS.deriveChildWithI(key, 0, withTweak(invalidTweak));
+        const invalidResult = __TESTS.deriveChildWithI(key, 0, withTweak(negativeParent));
+        deepStrictEqual(outOfRange.index, 1);
+        deepStrictEqual(outOfRange.publicExtendedKey, expected.publicExtendedKey);
+        deepStrictEqual(invalidResult.index, 1);
+        deepStrictEqual(invalidResult.publicExtendedKey, expected.publicExtendedKey);
+      }
+    });
+
+    it('should stop retrying at the last valid private or public index', () => {
+      const parent = HDKey.fromMasterSeed(hexToBytes(fixtures[0].seed));
+      const publicParent = HDKey.fromExtendedKey(parent.publicExtendedKey);
+      throws(() => __TESTS.deriveChildWithI(parent, 2 ** 32 - 1, withTweak(invalidTweak)));
+      throws(() =>
+        __TESTS.deriveChildWithI(publicParent, HARDENED_OFFSET - 1, withTweak(invalidTweak))
+      );
+    });
+
+    it('should propagate unexpected child-construction errors', () => {
+      const versions = { private: 0x0488ade4, public: 0x0488b21e };
+      const parent = HDKey.fromMasterSeed(hexToBytes(fixtures[0].seed), versions);
+      const expected = new Error('unexpected constructor error');
+      let reads = 0;
+      Object.defineProperty(versions, 'private', {
+        get() {
+          if (++reads === 1) throw expected;
+          return 0x0488ade4;
+        },
+      });
+      let error: unknown;
+      try {
+        __TESTS.deriveChildWithI(parent, 0, new Uint8Array(64));
+      } catch (err) {
+        error = err;
+      }
+
+      deepStrictEqual(error === expected, true);
+      deepStrictEqual(reads, 1);
+    });
+  });
   it('should throw on derive of wrong indexes', () => {
     const hdkey = HDKey.fromExtendedKey(fixtures[0].public);
     const invalid = ['m/0/ 1 /2', 'm/0/1.5/2', 'm/0/331e100/2', 'm/0/3e/2', "m/0/'/2"];
@@ -675,6 +768,20 @@ describe('hdkey', () => {
     hdkey.derive('m' + '/0'.repeat(255));
     // but deriving one level deeper fails.
     throws(() => hdkey.derive('m' + '/0'.repeat(256)));
+  });
+  it('Should limit derive paths to the remaining serializable depth', () => {
+    const root = HDKey.fromMasterSeed(hexToBytes(fixtures[0].seed));
+    const hdkey = new HDKey({
+      versions: root.versions,
+      chainCode: root.chainCode!,
+      depth: 254,
+      parentFingerprint: root.fingerprint,
+      index: 0,
+      privateKey: root.privateKey!,
+    });
+
+    deepStrictEqual(hdkey.derive('m/0').depth, 255);
+    throws(() => hdkey.derive('m/0/0'));
   });
 });
 

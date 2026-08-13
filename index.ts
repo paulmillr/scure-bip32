@@ -47,6 +47,7 @@ export interface Versions {
 const BITCOIN_VERSIONS: Versions = { private: 0x0488ade4, public: 0x0488b21e };
 /** Hardened child index offset from BIP32. */
 export const HARDENED_OFFSET: number = 0x80000000;
+const MAX_DEPTH = 0xff;
 
 const hash160 = (data: TArg<Uint8Array>) => ripemd160(sha256(data));
 const fromU32 = (data: TArg<Uint8Array>) => createView(data).getUint32(0, false);
@@ -60,7 +61,8 @@ const toU32 = (n: number, title: string = 'number'): TRet<Uint8Array> => {
   return buf;
 };
 const validateVersions = (versions: TArg<Versions>, title: string = 'versions'): Versions => {
-  if (!(typeof versions === 'object' && versions !== null)) throw new Error('versions must be an object');
+  if (!(typeof versions === 'object' && versions !== null))
+    throw new Error('versions must be an object');
   toU32((versions as Versions).private, `${title}.private`);
   toU32((versions as Versions).public, `${title}.public`);
   return versions as Versions;
@@ -146,6 +148,11 @@ export class HDKey {
     versions = validateVersions(versions);
     // => version(4) || depth(1) || fingerprint(4) || index(4) || chain(32) || key(33)
     const keyBuffer: Uint8Array = base58check.decode(base58key);
+    if (keyBuffer.length !== 78) {
+      throw new Error(
+        `HDKey: invalid extended key length: expected 78 bytes, got ${keyBuffer.length}`
+      );
+    }
     const keyView = createView(keyBuffer);
     const version = keyView.getUint32(0, false);
     const opt = {
@@ -185,6 +192,7 @@ export class HDKey {
     }
     this.versions = opt.versions ? validateVersions(opt.versions) : BITCOIN_VERSIONS;
     this.depth = opt.depth || 0;
+    if (opt.chainCode) abytes(opt.chainCode, 32);
     this.chainCode = opt.chainCode ? Uint8Array.from(opt.chainCode) : null;
     this.index = opt.index || 0;
     this.parentFingerprint = opt.parentFingerprint || 0;
@@ -193,7 +201,7 @@ export class HDKey {
         throw new Error('HDKey: zero depth with non-zero index/parent fingerprint');
       }
     }
-    if (this.depth > 255) {
+    if (this.depth > MAX_DEPTH) {
       throw new Error('HDKey: depth exceeds the serializable value 255');
     }
     if (opt.publicKey && opt.privateKey) {
@@ -220,6 +228,9 @@ export class HDKey {
       return this;
     }
     const parts = path.replace(/^[mM]'?\//, '').split('/');
+    if (parts.length > MAX_DEPTH - this.depth) {
+      throw new Error('HDKey: path exceeds the serializable depth 255');
+    }
     // tslint:disable-next-line
     let child: HDKey = this;
     for (const c of parts) {
@@ -272,33 +283,33 @@ export class HDKey {
       index,
     };
     // Fail early instead of re-trying different index
-    if (opt.depth! > 255) {
+    if (opt.depth! > MAX_DEPTH) {
       throw new Error('HDKey: depth exceeds the serializable value 255');
     }
-    try {
-      const ctweak = Fn.fromBytes(childTweak);
-      // BIP-32 private derivation retries only when parse256(I_L) >= n or k_i = 0.
-      // BIP-32 public derivation retries only when parse256(I_L) >= n or K_i is infinity.
-      // So I_L = 0 is valid here; Fn.fromBytes still rejects parse256(I_L) >= n.
-      if (this._privateKey) {
-        const added = Fn.create(Fn.fromBytes(this._privateKey) + ctweak);
-        if (!Fn.isValidNot0(added)) {
-          throw new Error('The tweak was out of range or the resulted private key is invalid');
-        }
-        opt.privateKey = Fn.toBytes(added);
-      } else {
-        const point = Point.fromBytes(this._publicKey);
-        const added = ctweak === 0n ? point : point.add(Point.BASE.multiply(ctweak));
-        // Cryptographically impossible: hmac-sha512 preimage would need to be found
-        if (added.equals(Point.ZERO)) {
-          throw new Error('The tweak was equal to negative P, which made the result key invalid');
-        }
-        opt.publicKey = added.toBytes(true);
+    const retry = (): HDKey => {
+      // Public derivation cannot cross into the hardened index range.
+      const maxIndex = this._privateKey ? 2 ** 32 - 1 : HARDENED_OFFSET - 1;
+      if (index >= maxIndex) {
+        throw new Error(`HDKey: cannot retry child derivation at index ${index}`);
       }
-      return new HDKey(opt);
-    } catch (err) {
       return this.deriveChild(index + 1);
+    };
+    // Decode without reducing: BIP-32 requires a retry when parse256(I_L) >= n.
+    const ctweak = Fn.fromBytes(childTweak, true);
+    if (!Fn.isValid(ctweak)) return retry();
+    // I_L = 0 is valid unless it produces an invalid child below.
+    if (this._privateKey) {
+      const added = Fn.create(Fn.fromBytes(this._privateKey) + ctweak);
+      if (!Fn.isValidNot0(added)) return retry();
+      opt.privateKey = Fn.toBytes(added);
+    } else {
+      const point = Point.fromBytes(this._publicKey);
+      const added = ctweak === 0n ? point : point.add(Point.BASE.multiply(ctweak));
+      // Cryptographically impossible: HMAC-SHA512 would need to produce the scalar -P.
+      if (added.equals(Point.ZERO)) return retry();
+      opt.publicKey = added.toBytes(true);
     }
+    return new HDKey(opt);
   }
 
   sign(hash: Uint8Array): Uint8Array {
