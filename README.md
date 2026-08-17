@@ -36,81 +36,168 @@ Notice [Warnings about BIP32](#warnings-about-bip32).
 
 > `deno add jsr:@scure/bip32`
 
-This module exports a single class `HDKey`, which should be used like this:
+Two immutable key types, `HDPrivateKey` (xprv) and `HDPublicKey` (xpub):
 
 ```ts
-import { HDKey } from '@scure/bip32';
+import { HDPrivateKey, HDPublicKey, fromExtendedKey, parsePath } from '@scure/bip32';
+import { randomBytes } from '@noble/hashes/utils.js';
+
+const seed = randomBytes(32); // or mnemonicToSeedSync() from @scure/bip39
+const root = HDPrivateKey.fromMasterSeed(seed);
+const account = root.derive("m/84'/0'/0'");
+const xprv = account.toExtended(); // 'xprv...'
+const xpub = account.toPublic().toExtended(); // 'xpub...'
+
+// Watch-only side: relative derivation, no secrets in scope
+const watch = HDPublicKey.fromExtended(xpub);
+const receive5 = watch.derive('0/5').publicKey; // 33-byte compressed key
+const change = watch.derive([1, 0]); // array form == relative indexes
+
+// Unknown string → narrow by type
+const key = fromExtendedKey(xprv);
+if (key instanceof HDPrivateKey) key.privateKey;
+
+// PSBT-style metadata
+const derivation = { fingerprint: root.fingerprint, path: parsePath("m/84'/0'/0'/0/5").indexes };
+```
+
+Rules that follow from the two types:
+
+- `HDPublicKey` has no `privateKey`, cannot derive hardened children (`0'`, `0h`, index `>= HARDENED_OFFSET`)
+  and `toExtended()` always yields an xpub. `HDPrivateKey.toPublic()` is BIP32's `N()`.
+- Byte getters (`publicKey`, `chainCode`, `identifier`, `privateKey`) return fresh copies;
+  keys are never mutated after construction. `chainCode` is part of the secret: guard it like the key.
+- `derive(path)` accepts absolute paths (`m/...`) only on a depth-0 key and relative paths
+  (`0/1'`) on any key. Hardened markers `'` and `h` are both accepted. `deriveChild(index)`
+  is one step; hardened indexes are `index + HARDENED_OFFSET`.
+- `JSON.stringify(publicKey)` yields the xpub string; `JSON.stringify(privateKey)` throws —
+  private material only leaves via an explicit `toExtended()`.
+- Version bytes are a serialization concern, not a key property: pass them to
+  `toExtended(versions)` / `fromExtended(key, versions)`. Default is Bitcoin mainnet.
+
+Signing is left to the caller so any signature shape can be used:
+
+```ts
+import { HDPrivateKey } from '@scure/bip32';
+import { secp256k1, schnorr } from '@noble/curves/secp256k1.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { randomBytes } from '@noble/hashes/utils.js';
 
-const seed = randomBytes(32);
-const root = HDKey.fromMasterSeed(seed);
-const base58key = root.privateExtendedKey;
-const restored = HDKey.fromExtendedKey(base58key);
-const fromJson = HDKey.fromJSON({ xpriv: base58key });
-const child = fromJson.derive("m/0/2147483647'/1");
+const key = HDPrivateKey.fromMasterSeed(randomBytes(32)).derive("m/86'/0'/0'/0/0");
 const msgHash = sha256(new TextEncoder().encode('hello scure-bip32'));
-
-// props
-[root.depth, root.index, root.chainCode];
-[restored.privateKey, restored.publicKey];
-const sig = child.sign(msgHash);
-child.verify(msgHash, sig);
+const sig = secp256k1.sign(msgHash, key.privateKey, { prehash: false });
+const ok = secp256k1.verify(sig, msgHash, key.publicKey, { prehash: false });
+const taproot = schnorr.sign(msgHash, key.privateKey);
 ```
 
-Note: `chainCode` property is essentially a private part
-of a secret "master" key, it should be guarded from unauthorized access. Byte-array
-getters return copies so callers cannot mutate an `HDKey`'s internal state. These
-snapshots remain caller-owned and are not zeroed by `wipePrivateData()`.
+Other networks:
 
-For backwards compatibility, `JSON.stringify()` currently serializes both the
-private and public extended keys of an `HDKey`. Treat the result as secret key
-material. A future v3 release will make automatic JSON serialization public-only.
+```ts
+import { HDPrivateKey, HDPublicKey } from '@scure/bip32';
+import { randomBytes } from '@noble/hashes/utils.js';
+
+const TESTNET = { private: 0x04358394, public: 0x043587cf }; // tprv / tpub
+const root = HDPrivateKey.fromMasterSeed(randomBytes(32));
+const tpub = root.derive("m/84'/1'/0'").toPublic().toExtended(TESTNET);
+const acct = HDPublicKey.fromExtended(tpub, TESTNET); // wrong network throws
+const next = acct.derive('0/1').toExtended(TESTNET);
+```
 
 The full API is:
 
 ```ts
-class HDKey {
-  public static HARDENED_OFFSET: number;
-  public static fromMasterSeed(seed: Uint8Array, versions: Versions): HDKey;
-  public static fromExtendedKey(base58key: string, versions: Versions): HDKey;
-  public static fromJSON(json: { xpriv: string } | { xpub: string }): HDKey;
-
-  readonly versions: Versions;
-  readonly depth: number = 0;
-  readonly index: number = 0;
-  readonly parentFingerprint: number = 0;
-
-  get fingerprint(): number;
-  get identifier(): Uint8Array | undefined;
-  get pubKeyHash(): Uint8Array | undefined;
-  get privateKey(): Uint8Array | null;
-  get publicKey(): Uint8Array | null;
-  get chainCode(): Uint8Array | null;
-  get privateExtendedKey(): string;
-  get publicExtendedKey(): string;
-
-  derive(path: string): HDKey;
-  deriveChild(index: number): HDKey;
-  sign(hash: Uint8Array): Uint8Array;
-  verify(hash: Uint8Array, signature: Uint8Array): boolean;
-  wipePrivateData(): this;
-  // TODO(v3): Make automatic JSON serialization public-only.
-  toJSON(): { xpriv: string; xpub: string };
-  // Explicitly exports private key material. Treat the result as a secret.
-  toPrivateJSON(): { xpriv: string; xpub: string };
-}
-
+declare const HARDENED_OFFSET: number; // 0x80000000
+declare const BITCOIN_VERSIONS: Versions; // xprv / xpub, the default everywhere
 interface Versions {
   private: number;
   public: number;
 }
+interface NodeMeta {
+  depth?: number;
+  index?: number;
+  parentFingerprint?: number;
+}
+/** "m/44'/0h/1" → { absolute: true, indexes: [0x8000002c, 0x80000000, 1] } */
+declare function parsePath(path: string): { absolute: boolean; indexes: number[] };
+
+/** What both key types share; use as a parameter type when either is fine. */
+interface HDNode {
+  readonly depth: number;
+  readonly index: number;
+  readonly parentFingerprint: number;
+  readonly publicKey: Uint8Array; // 33 bytes, copy
+  readonly chainCode: Uint8Array; // 32 bytes, copy
+  readonly identifier: Uint8Array; // hash160(publicKey), copy
+  readonly fingerprint: number; // first 4 bytes of identifier
+  deriveChild(index: number): HDNode;
+  derive(path: string | number[]): HDNode;
+  toExtended(versions?: Versions): string;
+}
+declare class HDPublicKey implements HDNode {
+  constructor(publicKey: Uint8Array, chainCode: Uint8Array, meta?: NodeMeta);
+  static fromExtended(xpub: string, versions?: Versions): HDPublicKey; // throws on xprv
+  readonly depth: number;
+  readonly index: number;
+  readonly parentFingerprint: number;
+  readonly publicKey: Uint8Array;
+  readonly chainCode: Uint8Array;
+  readonly identifier: Uint8Array;
+  readonly fingerprint: number;
+  deriveChild(index: number): HDPublicKey; // hardened → throws
+  derive(path: string | number[]): HDPublicKey;
+  toExtended(versions?: Versions): string; // xpub
+  toJSON(): string; // xpub
+}
+declare class HDPrivateKey implements HDNode {
+  constructor(privateKey: Uint8Array, chainCode: Uint8Array, meta?: NodeMeta);
+  static fromMasterSeed(seed: Uint8Array): HDPrivateKey; // 16..64 bytes
+  static fromExtended(xprv: string, versions?: Versions): HDPrivateKey; // throws on xpub
+  readonly depth: number;
+  readonly index: number;
+  readonly parentFingerprint: number;
+  readonly privateKey: Uint8Array; // 32 bytes, copy
+  readonly publicKey: Uint8Array;
+  readonly chainCode: Uint8Array;
+  readonly identifier: Uint8Array;
+  readonly fingerprint: number;
+  toPublic(): HDPublicKey; // BIP32 N()
+  deriveChild(index: number): HDPrivateKey;
+  derive(path: string | number[]): HDPrivateKey;
+  toExtended(versions?: Versions): string; // xprv
+  toJSON(): never; // throws
+}
+/** Decodes either kind; narrow with `instanceof HDPrivateKey`. */
+declare function fromExtendedKey(key: string, versions?: Versions): HDPrivateKey | HDPublicKey;
 ```
+
+### Legacy `HDKey` (2.x API)
+
+The 2.x class `HDKey` is still exported, unchanged in behaviour, but is now a thin adapter over
+the two classes above and is deprecated; it will be removed in the next major.
+`hdkey.node` returns the underlying `HDPrivateKey | HDPublicKey`, and `new HDKey(node, versions?)`
+wraps one for code still typed on `HDKey`. Two deliberate differences from 2.x:
+`wipePrivateData()` swaps in the public node instead of zeroing bytes (returned copies were never
+zeroed anyway), and constructing without a `chainCode` now throws.
+
+| 2.x                                                | 3.x                                                              |
+| -------------------------------------------------- | ---------------------------------------------------------------- |
+| `HDKey.fromMasterSeed(seed, versions)`             | `HDPrivateKey.fromMasterSeed(seed)`; versions move to `toExtended` |
+| `HDKey.fromExtendedKey(s, versions)`               | `fromExtendedKey(s, versions)` or `HDPrivateKey.fromExtended` / `HDPublicKey.fromExtended` |
+| `new HDKey({ privateKey, chainCode, depth, ... })` | `new HDPrivateKey(privateKey, chainCode, { depth, ... })`        |
+| `new HDKey({ publicKey, chainCode })`              | `new HDPublicKey(publicKey, chainCode)`                          |
+| `.privateExtendedKey` / `.publicExtendedKey`       | `.toExtended()` / `.toPublic().toExtended()`                     |
+| `.wipePrivateData()`                               | `.toPublic()`, then drop the private reference                   |
+| `.pubKeyHash`                                      | `.identifier`                                                    |
+| `.sign(hash)` / `.verify(hash, sig)`               | `secp256k1.sign(hash, key.privateKey, { prehash: false })` / `secp256k1.verify(...)` |
+| `.toJSON()`, `.toPrivateJSON()`, `HDKey.fromJSON()` | `.toExtended()` / `fromExtendedKey()`                            |
+| `.derive("m/0/1")` — `m` means "this key"          | `.derive("m/0/1")` absolute from depth 0 only; `.derive("0/1")` relative anywhere |
+| `.deriveChild(i)`, `HARDENED_OFFSET`, `.depth`, `.index`, `.parentFingerprint`, `.fingerprint`, `.identifier` | unchanged |
+| `.versions`                                        | gone; pass to `toExtended` / `fromExtended`                      |
 
 The module implements [bip32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki) standard:
 check it out for additional documentation.
 
-The implementation is loosely based on cryptocoinjs/hdkey, [which has MIT License](#LICENSE).
+The legacy `HDKey` API is loosely based on cryptocoinjs/hdkey, [which has MIT License](#LICENSE).
 
 ## Warnings about BIP32
 
@@ -160,7 +247,7 @@ For this package, there are 3 dependencies; and a few dev dependencies:
 - [noble-curves](https://github.com/paulmillr/noble-curves) provides ECDSA
 - [scure-base](https://github.com/paulmillr/scure-base) provides base58
 - jsbt is used for benchmarking / testing / build tooling and developed by the same author
-- prettier, fast-check and typescript are used for code quality / test generation / ts compilation
+- prettier and typescript are used for code quality / ts compilation
 
 ## License
 
