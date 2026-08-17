@@ -141,8 +141,8 @@ describe('hdkey', () => {
         deepStrictEqual(childkey.publicExtendedKey, f.public);
       });
 
-      describe('> ' + f.path + ' toJSON() / fromJSON()', () => {
-        it('should return an object read for JSON serialization', () => {
+      describe('> ' + f.path + ' JSON serialization', () => {
+        it('should preserve private serialization by default for backwards compatibility', () => {
           const hdkey = HDKey.fromMasterSeed(hexToBytes(f.seed));
           const childkey = hdkey.derive(f.path);
           const obj = {
@@ -150,6 +150,22 @@ describe('hdkey', () => {
             xpub: f.public,
           };
           deepStrictEqual(childkey.toJSON(), obj);
+          const serialized = JSON.stringify({ wallet: childkey });
+          deepStrictEqual(serialized, JSON.stringify({ wallet: obj }));
+          deepStrictEqual(serialized.includes('xprv'), true);
+          const publicKey = HDKey.fromJSON({ xpub: f.public });
+          deepStrictEqual(publicKey.privateKey, null);
+          deepStrictEqual(publicKey.publicExtendedKey, f.public);
+        });
+
+        it('should explicitly serialize private key material for a private round-trip', () => {
+          const hdkey = HDKey.fromMasterSeed(hexToBytes(f.seed));
+          const childkey = hdkey.derive(f.path);
+          const obj = {
+            xpriv: f.private,
+            xpub: f.public,
+          };
+          deepStrictEqual(childkey.toPrivateJSON(), obj);
           const newKey = HDKey.fromJSON(obj);
           deepStrictEqual(newKey.privateExtendedKey, f.private);
           deepStrictEqual(newKey.publicExtendedKey, f.public);
@@ -204,6 +220,46 @@ describe('hdkey', () => {
         // @ts-ignore
         hdkey.publicKey = pub;
       });
+    });
+  });
+
+  describe('- key material snapshots', () => {
+    it('should not expose mutable aliases of internal key material', () => {
+      const root = HDKey.fromMasterSeed(hexToBytes(fixtures[0].seed));
+      const expected = {
+        privateKey: root.privateKey!,
+        publicKey: root.publicKey!,
+        chainCode: root.chainCode!,
+        identifier: root.identifier!,
+        pubKeyHash: root.pubKeyHash!,
+        xpriv: root.privateExtendedKey,
+        xpub: root.publicExtendedKey,
+        fingerprint: root.fingerprint,
+        hardenedChild: root.derive("m/0'").privateExtendedKey,
+        normalChild: root.derive('m/0').privateExtendedKey,
+      };
+      const snapshots = [
+        root.privateKey!,
+        root.publicKey!,
+        root.chainCode!,
+        root.identifier!,
+        root.pubKeyHash!,
+      ];
+
+      for (const snapshot of snapshots) snapshot.fill(0);
+
+      deepStrictEqual(root.privateKey!, expected.privateKey);
+      deepStrictEqual(root.publicKey!, expected.publicKey);
+      deepStrictEqual(root.chainCode!, expected.chainCode);
+      deepStrictEqual(root.identifier!, expected.identifier);
+      deepStrictEqual(root.pubKeyHash!, expected.pubKeyHash);
+      deepStrictEqual(root.privateExtendedKey, expected.xpriv);
+      deepStrictEqual(root.publicExtendedKey, expected.xpub);
+      deepStrictEqual(root.fingerprint, expected.fingerprint);
+      deepStrictEqual(root.derive("m/0'").privateExtendedKey, expected.hardenedChild);
+      deepStrictEqual(root.derive('m/0').privateExtendedKey, expected.normalChild);
+      const hash = new Uint8Array(32).fill(8);
+      deepStrictEqual(root.verify(hash, root.sign(hash)), true);
     });
   });
 
@@ -403,11 +459,25 @@ describe('hdkey', () => {
   });
 
   describe('- after wipePrivateData()', () => {
+    it('should not zero previously returned private key snapshots', () => {
+      const hdkey = HDKey.fromMasterSeed(hexToBytes(fixtures[0].seed));
+      const snapshot = hdkey.privateKey!;
+      const expected = Uint8Array.from(snapshot);
+
+      hdkey.wipePrivateData();
+
+      deepStrictEqual(hdkey.privateKey, null);
+      deepStrictEqual(snapshot, expected);
+      snapshot.fill(0);
+    });
+
     it('should not have private data', () => {
       const hdkey = HDKey.fromMasterSeed(hexToBytes(fixtures[6].seed)).wipePrivateData();
       deepStrictEqual(hdkey.privateKey, null);
       throws(() => hdkey.privateExtendedKey);
       throws(() => hdkey.sign(new Uint8Array(32)));
+      throws(() => hdkey.toJSON());
+      throws(() => JSON.stringify({ wallet: hdkey }));
       const childKey = hdkey.derive('m/0');
       deepStrictEqual(childKey.publicExtendedKey, fixtures[7].public);
       deepStrictEqual(childKey.privateKey, null);
@@ -438,7 +508,7 @@ describe('hdkey', () => {
     it('should be able to verify signatures', () => {
       const fullKey = HDKey.fromMasterSeed(hexToBytes(fixtures[0].seed));
       // using JSON methods to clone before mutating
-      const wipedKey = HDKey.fromJSON(fullKey.toJSON()).wipePrivateData();
+      const wipedKey = HDKey.fromJSON(fullKey.toPrivateJSON()).wipePrivateData();
       const hash = new Uint8Array(32).fill(8);
       deepStrictEqual(!!wipedKey.verify(hash, fullKey.sign(hash)), true);
     });
@@ -591,32 +661,32 @@ describe('hdkey', () => {
   describe('Spec test vectors', () => {
     it('Test Vector 1', () => {
       const master = HDKey.fromMasterSeed(hexToBytes('000102030405060708090a0b0c0d0e0f'));
-      deepStrictEqual(master.derive('m').toJSON(), {
+      deepStrictEqual(master.derive('m').toPrivateJSON(), {
         xpriv:
           'xprv9s21ZrQH143K3QTDL4LXw2F7HEK3wJUD2nW2nRk4stbPy6cq3jPPqjiChkVvvNKmPGJxWUtg6LnF5kejMRNNU3TGtRBeJgk33yuGBxrMPHi',
         xpub: 'xpub661MyMwAqRbcFtXgS5sYJABqqG9YLmC4Q1Rdap9gSE8NqtwybGhePY2gZ29ESFjqJoCu1Rupje8YtGqsefD265TMg7usUDFdp6W1EGMcet8',
       });
-      deepStrictEqual(master.derive("m/0'").toJSON(), {
+      deepStrictEqual(master.derive("m/0'").toPrivateJSON(), {
         xpriv:
           'xprv9uHRZZhk6KAJC1avXpDAp4MDc3sQKNxDiPvvkX8Br5ngLNv1TxvUxt4cV1rGL5hj6KCesnDYUhd7oWgT11eZG7XnxHrnYeSvkzY7d2bhkJ7',
         xpub: 'xpub68Gmy5EdvgibQVfPdqkBBCHxA5htiqg55crXYuXoQRKfDBFA1WEjWgP6LHhwBZeNK1VTsfTFUHCdrfp1bgwQ9xv5ski8PX9rL2dZXvgGDnw',
       });
-      deepStrictEqual(master.derive("m/0'/1").toJSON(), {
+      deepStrictEqual(master.derive("m/0'/1").toPrivateJSON(), {
         xpriv:
           'xprv9wTYmMFdV23N2TdNG573QoEsfRrWKQgWeibmLntzniatZvR9BmLnvSxqu53Kw1UmYPxLgboyZQaXwTCg8MSY3H2EU4pWcQDnRnrVA1xe8fs',
         xpub: 'xpub6ASuArnXKPbfEwhqN6e3mwBcDTgzisQN1wXN9BJcM47sSikHjJf3UFHKkNAWbWMiGj7Wf5uMash7SyYq527Hqck2AxYysAA7xmALppuCkwQ',
       });
-      deepStrictEqual(master.derive("m/0'/1/2'").toJSON(), {
+      deepStrictEqual(master.derive("m/0'/1/2'").toPrivateJSON(), {
         xpriv:
           'xprv9z4pot5VBttmtdRTWfWQmoH1taj2axGVzFqSb8C9xaxKymcFzXBDptWmT7FwuEzG3ryjH4ktypQSAewRiNMjANTtpgP4mLTj34bhnZX7UiM',
         xpub: 'xpub6D4BDPcP2GT577Vvch3R8wDkScZWzQzMMUm3PWbmWvVJrZwQY4VUNgqFJPMM3No2dFDFGTsxxpG5uJh7n7epu4trkrX7x7DogT5Uv6fcLW5',
       });
-      deepStrictEqual(master.derive("m/0'/1/2'/2").toJSON(), {
+      deepStrictEqual(master.derive("m/0'/1/2'/2").toPrivateJSON(), {
         xpriv:
           'xprvA2JDeKCSNNZky6uBCviVfJSKyQ1mDYahRjijr5idH2WwLsEd4Hsb2Tyh8RfQMuPh7f7RtyzTtdrbdqqsunu5Mm3wDvUAKRHSC34sJ7in334',
         xpub: 'xpub6FHa3pjLCk84BayeJxFW2SP4XRrFd1JYnxeLeU8EqN3vDfZmbqBqaGJAyiLjTAwm6ZLRQUMv1ZACTj37sR62cfN7fe5JnJ7dh8zL4fiyLHV',
       });
-      deepStrictEqual(master.derive("m/0'/1/2'/2/1000000000").toJSON(), {
+      deepStrictEqual(master.derive("m/0'/1/2'/2/1000000000").toPrivateJSON(), {
         xpriv:
           'xprvA41z7zogVVwxVSgdKUHDy1SKmdb533PjDz7J6N6mV6uS3ze1ai8FHa8kmHScGpWmj4WggLyQjgPie1rFSruoUihUZREPSL39UNdE3BBDu76',
         xpub: 'xpub6H1LXWLaKsWFhvm6RVpEL9P4KfRZSW7abD2ttkWP3SSQvnyA8FSVqNTEcYFgJS2UaFcxupHiYkro49S8yGasTvXEYBVPamhGW6cFJodrTHy',
@@ -628,32 +698,32 @@ describe('hdkey', () => {
           'fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a29f9c999693908d8a8784817e7b7875726f6c696663605d5a5754514e4b484542'
         )
       );
-      deepStrictEqual(master.derive('m').toJSON(), {
+      deepStrictEqual(master.derive('m').toPrivateJSON(), {
         xpriv:
           'xprv9s21ZrQH143K31xYSDQpPDxsXRTUcvj2iNHm5NUtrGiGG5e2DtALGdso3pGz6ssrdK4PFmM8NSpSBHNqPqm55Qn3LqFtT2emdEXVYsCzC2U',
         xpub: 'xpub661MyMwAqRbcFW31YEwpkMuc5THy2PSt5bDMsktWQcFF8syAmRUapSCGu8ED9W6oDMSgv6Zz8idoc4a6mr8BDzTJY47LJhkJ8UB7WEGuduB',
       });
-      deepStrictEqual(master.derive('m/0').toJSON(), {
+      deepStrictEqual(master.derive('m/0').toPrivateJSON(), {
         xpriv:
           'xprv9vHkqa6EV4sPZHYqZznhT2NPtPCjKuDKGY38FBWLvgaDx45zo9WQRUT3dKYnjwih2yJD9mkrocEZXo1ex8G81dwSM1fwqWpWkeS3v86pgKt',
         xpub: 'xpub69H7F5d8KSRgmmdJg2KhpAK8SR3DjMwAdkxj3ZuxV27CprR9LgpeyGmXUbC6wb7ERfvrnKZjXoUmmDznezpbZb7ap6r1D3tgFxHmwMkQTPH',
       });
-      deepStrictEqual(master.derive("m/0/2147483647'").toJSON(), {
+      deepStrictEqual(master.derive("m/0/2147483647'").toPrivateJSON(), {
         xpriv:
           'xprv9wSp6B7kry3Vj9m1zSnLvN3xH8RdsPP1Mh7fAaR7aRLcQMKTR2vidYEeEg2mUCTAwCd6vnxVrcjfy2kRgVsFawNzmjuHc2YmYRmagcEPdU9',
         xpub: 'xpub6ASAVgeehLbnwdqV6UKMHVzgqAG8Gr6riv3Fxxpj8ksbH9ebxaEyBLZ85ySDhKiLDBrQSARLq1uNRts8RuJiHjaDMBU4Zn9h8LZNnBC5y4a',
       });
-      deepStrictEqual(master.derive("m/0/2147483647'/1").toJSON(), {
+      deepStrictEqual(master.derive("m/0/2147483647'/1").toPrivateJSON(), {
         xpriv:
           'xprv9zFnWC6h2cLgpmSA46vutJzBcfJ8yaJGg8cX1e5StJh45BBciYTRXSd25UEPVuesF9yog62tGAQtHjXajPPdbRCHuWS6T8XA2ECKADdw4Ef',
         xpub: 'xpub6DF8uhdarytz3FWdA8TvFSvvAh8dP3283MY7p2V4SeE2wyWmG5mg5EwVvmdMVCQcoNJxGoWaU9DCWh89LojfZ537wTfunKau47EL2dhHKon',
       });
-      deepStrictEqual(master.derive("m/0/2147483647'/1/2147483646'").toJSON(), {
+      deepStrictEqual(master.derive("m/0/2147483647'/1/2147483646'").toPrivateJSON(), {
         xpriv:
           'xprvA1RpRA33e1JQ7ifknakTFpgNXPmW2YvmhqLQYMmrj4xJXXWYpDPS3xz7iAxn8L39njGVyuoseXzU6rcxFLJ8HFsTjSyQbLYnMpCqE2VbFWc',
         xpub: 'xpub6ERApfZwUNrhLCkDtcHTcxd75RbzS1ed54G1LkBUHQVHQKqhMkhgbmJbZRkrgZw4koxb5JaHWkY4ALHY2grBGRjaDMzQLcgJvLJuZZvRcEL',
       });
-      deepStrictEqual(master.derive("m/0/2147483647'/1/2147483646'/2").toJSON(), {
+      deepStrictEqual(master.derive("m/0/2147483647'/1/2147483646'/2").toPrivateJSON(), {
         xpriv:
           'xprvA2nrNbFZABcdryreWet9Ea4LvTJcGsqrMzxHx98MMrotbir7yrKCEXw7nadnHM8Dq38EGfSh6dqA9QWTyefMLEcBYJUuekgW4BYPJcr9E7j',
         xpub: 'xpub6FnCn6nSzZAw5Tw7cgR9bi15UV96gLZhjDstkXXxvCLsUXBGXPdSnLFbdpq8p9HmGsApME5hQTZ3emM2rnY5agb9rXpVGyy3bdW6EEgAtqt',
@@ -665,12 +735,12 @@ describe('hdkey', () => {
           '4b381541583be4423346c643850da4b320e46a87ae3d2a4e6da11eba819cd4acba45d239319ac14f863b8d5ab5a0d0c64d2e8a1e7d1457df2e5a3c51c73235be'
         )
       );
-      deepStrictEqual(master.derive('m').toJSON(), {
+      deepStrictEqual(master.derive('m').toPrivateJSON(), {
         xpriv:
           'xprv9s21ZrQH143K25QhxbucbDDuQ4naNntJRi4KUfWT7xo4EKsHt2QJDu7KXp1A3u7Bi1j8ph3EGsZ9Xvz9dGuVrtHHs7pXeTzjuxBrCmmhgC6',
         xpub: 'xpub661MyMwAqRbcEZVB4dScxMAdx6d4nFc9nvyvH3v4gJL378CSRZiYmhRoP7mBy6gSPSCYk6SzXPTf3ND1cZAceL7SfJ1Z3GC8vBgp2epUt13',
       });
-      deepStrictEqual(master.derive("m/0'").toJSON(), {
+      deepStrictEqual(master.derive("m/0'").toPrivateJSON(), {
         xpriv:
           'xprv9uPDJpEQgRQfDcW7BkF7eTya6RPxXeJCqCJGHuCJ4GiRVLzkTXBAJMu2qaMWPrS7AANYqdq6vcBcBUdJCVVFceUvJFjaPdGZ2y9WACViL4L',
         xpub: 'xpub68NZiKmJWnxxS6aaHmn81bvJeTESw724CRDs6HbuccFQN9Ku14VQrADWgqbhhTHBaohPX4CjNLf9fq9MYo6oDaPPLPxSb7gwQN3ih19Zm4Y',
@@ -680,17 +750,17 @@ describe('hdkey', () => {
       const master = HDKey.fromMasterSeed(
         hexToBytes('3ddd5602285899a946114506157c7997e5444528f3003f6134712147db19b678')
       );
-      deepStrictEqual(master.derive('m').toJSON(), {
+      deepStrictEqual(master.derive('m').toPrivateJSON(), {
         xpriv:
           'xprv9s21ZrQH143K48vGoLGRPxgo2JNkJ3J3fqkirQC2zVdk5Dgd5w14S7fRDyHH4dWNHUgkvsvNDCkvAwcSHNAQwhwgNMgZhLtQC63zxwhQmRv',
         xpub: 'xpub661MyMwAqRbcGczjuMoRm6dXaLDEhW1u34gKenbeYqAix21mdUKJyuyu5F1rzYGVxyL6tmgBUAEPrEz92mBXjByMRiJdba9wpnN37RLLAXa',
       });
-      deepStrictEqual(master.derive("m/0'").toJSON(), {
+      deepStrictEqual(master.derive("m/0'").toPrivateJSON(), {
         xpriv:
           'xprv9vB7xEWwNp9kh1wQRfCCQMnZUEG21LpbR9NPCNN1dwhiZkjjeGRnaALmPXCX7SgjFTiCTT6bXes17boXtjq3xLpcDjzEuGLQBM5ohqkao9G',
         xpub: 'xpub69AUMk3qDBi3uW1sXgjCmVjJ2G6WQoYSnNHyzkmdCHEhSZ4tBok37xfFEqHd2AddP56Tqp4o56AePAgCjYdvpW2PU2jbUPFKsav5ut6Ch1m',
       });
-      deepStrictEqual(master.derive("m/0'/1'").toJSON(), {
+      deepStrictEqual(master.derive("m/0'/1'").toPrivateJSON(), {
         xpriv:
           'xprv9xJocDuwtYCMNAo3Zw76WENQeAS6WGXQ55RCy7tDJ8oALr4FWkuVoHJeHVAcAqiZLE7Je3vZJHxspZdFHfnBEjHqU5hG1Jaj32dVoS6XLT1',
         xpub: 'xpub6BJA1jSqiukeaesWfxe6sNK9CCGaujFFSJLomWHprUL9DePQ4JDkM5d88n49sMGJxrhpjazuXYWdMf17C9T5XnxkopaeS7jGk1GyyVziaMt',

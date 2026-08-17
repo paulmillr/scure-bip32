@@ -59,7 +59,13 @@ child.verify(msgHash, sig);
 ```
 
 Note: `chainCode` property is essentially a private part
-of a secret "master" key, it should be guarded from unauthorized access.
+of a secret "master" key, it should be guarded from unauthorized access. Byte-array
+getters return copies so callers cannot mutate an `HDKey`'s internal state. These
+snapshots remain caller-owned and are not zeroed by `wipePrivateData()`.
+
+For backwards compatibility, `JSON.stringify()` currently serializes both the
+private and public extended keys of an `HDKey`. Treat the result as secret key
+material. A future v3 release will make automatic JSON serialization public-only.
 
 The full API is:
 
@@ -68,12 +74,11 @@ class HDKey {
   public static HARDENED_OFFSET: number;
   public static fromMasterSeed(seed: Uint8Array, versions: Versions): HDKey;
   public static fromExtendedKey(base58key: string, versions: Versions): HDKey;
-  public static fromJSON(json: { xpriv: string }): HDKey;
+  public static fromJSON(json: { xpriv: string } | { xpub: string }): HDKey;
 
   readonly versions: Versions;
   readonly depth: number = 0;
   readonly index: number = 0;
-  readonly chainCode: Uint8Array | null = null;
   readonly parentFingerprint: number = 0;
 
   get fingerprint(): number;
@@ -81,6 +86,7 @@ class HDKey {
   get pubKeyHash(): Uint8Array | undefined;
   get privateKey(): Uint8Array | null;
   get publicKey(): Uint8Array | null;
+  get chainCode(): Uint8Array | null;
   get privateExtendedKey(): string;
   get publicExtendedKey(): string;
 
@@ -89,6 +95,10 @@ class HDKey {
   sign(hash: Uint8Array): Uint8Array;
   verify(hash: Uint8Array, signature: Uint8Array): boolean;
   wipePrivateData(): this;
+  // TODO(v3): Make automatic JSON serialization public-only.
+  toJSON(): { xpriv: string; xpub: string };
+  // Explicitly exports private key material. Treat the result as a secret.
+  toPrivateJSON(): { xpriv: string; xpub: string };
 }
 
 interface Versions {

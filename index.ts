@@ -94,24 +94,25 @@ interface HDKeyOpt {
  */
 export class HDKey {
   get fingerprint(): number {
-    if (!this.pubHash) {
+    if (!this._pubHash) {
       throw new Error('No publicKey set!');
     }
-    return fromU32(this.pubHash);
+    return fromU32(this._pubHash);
   }
   get identifier(): Uint8Array | undefined {
-    return this.pubHash;
+    return this._pubHash ? Uint8Array.from(this._pubHash) : undefined;
   }
   get pubKeyHash(): Uint8Array | undefined {
-    return this.pubHash;
+    return this._pubHash ? Uint8Array.from(this._pubHash) : undefined;
   }
-  // Returns the live private key buffer for this instance.
-  // Copy it first if you need an immutable snapshot.
   get privateKey(): Uint8Array | null {
-    return this._privateKey || null;
+    return this._privateKey ? Uint8Array.from(this._privateKey) : null;
   }
   get publicKey(): Uint8Array | null {
-    return this._publicKey || null;
+    return this._publicKey ? Uint8Array.from(this._publicKey) : null;
+  }
+  get chainCode(): Uint8Array | null {
+    return this._chainCode ? Uint8Array.from(this._chainCode) : null;
   }
   get privateExtendedKey(): string {
     const priv = this._privateKey;
@@ -174,17 +175,17 @@ export class HDKey {
     }
   }
 
-  public static fromJSON(json: { xpriv: string }): HDKey {
-    return HDKey.fromExtendedKey(json.xpriv);
+  public static fromJSON(json: { xpriv: string } | { xpub: string }): HDKey {
+    return HDKey.fromExtendedKey('xpriv' in json ? json.xpriv : json.xpub);
   }
   readonly versions: Versions;
   readonly depth: number = 0;
   readonly index: number = 0;
-  readonly chainCode: Uint8Array | null = null;
   readonly parentFingerprint: number = 0;
+  private _chainCode: Uint8Array | null = null;
   private _privateKey?: Uint8Array;
   private _publicKey?: Uint8Array;
-  private pubHash: Uint8Array | undefined;
+  private _pubHash: Uint8Array | undefined;
 
   constructor(opt: HDKeyOpt) {
     if (!opt || typeof opt !== 'object') {
@@ -193,7 +194,7 @@ export class HDKey {
     this.versions = opt.versions ? validateVersions(opt.versions) : BITCOIN_VERSIONS;
     this.depth = opt.depth || 0;
     if (opt.chainCode) abytes(opt.chainCode, 32);
-    this.chainCode = opt.chainCode ? Uint8Array.from(opt.chainCode) : null;
+    this._chainCode = opt.chainCode ? Uint8Array.from(opt.chainCode) : null;
     this.index = opt.index || 0;
     this.parentFingerprint = opt.parentFingerprint || 0;
     if (!this.depth) {
@@ -217,7 +218,7 @@ export class HDKey {
     } else {
       throw new Error('HDKey: no public or private key provided');
     }
-    this.pubHash = hash160(this._publicKey);
+    this._pubHash = hash160(this._publicKey);
   }
 
   derive(path: string): HDKey {
@@ -255,7 +256,7 @@ export class HDKey {
    * @param _I - Test-only override for the 64-byte HMAC-SHA512 output; normal callers must omit it.
    */
   deriveChild(index: number, _I?: Uint8Array): HDKey {
-    if (!this._publicKey || !this.chainCode) {
+    if (!this._publicKey || !this._chainCode) {
       throw new Error('No publicKey or chainCode set');
     }
     let data = toU32(index, 'index');
@@ -271,7 +272,7 @@ export class HDKey {
       // Normal child: serP(point(kpar)) || ser32(index)
       data = concatBytes(this._publicKey, data);
     }
-    const out = _I || hmac(sha512, this.chainCode, data);
+    const out = _I || hmac(sha512, this._chainCode, data);
     abytes(out, 64);
     const childTweak = out.slice(0, 32);
     const chainCode = out.slice(32);
@@ -336,7 +337,14 @@ export class HDKey {
     }
     return this;
   }
+  // TODO(v3): Make automatic JSON serialization public-only so JSON.stringify cannot expose xpriv.
   toJSON(): { xpriv: string; xpub: string } {
+    return this.toPrivateJSON();
+  }
+  /**
+   * Explicitly exports private key material. Treat the returned value as a secret.
+   */
+  toPrivateJSON(): { xpriv: string; xpub: string } {
     return {
       xpriv: this.privateExtendedKey,
       xpub: this.publicExtendedKey,
@@ -344,7 +352,7 @@ export class HDKey {
   }
 
   private serialize(version: number, key: Uint8Array) {
-    if (!this.chainCode) {
+    if (!this._chainCode) {
       throw new Error('No chainCode set');
     }
     abytes(key, 33);
@@ -354,7 +362,7 @@ export class HDKey {
       new Uint8Array([this.depth]),
       toU32(this.parentFingerprint, 'parentFingerprint'),
       toU32(this.index, 'index'),
-      this.chainCode,
+      this._chainCode,
       key
     );
   }
