@@ -3,9 +3,13 @@ import { hexToBytes, bytesToHex as toHex } from '@noble/hashes/utils.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { describe, it } from '@paulmillr/jsbt/test.js';
 import { createBase58check } from '@scure/base';
-import { __TESTS, HARDENED_OFFSET, HDKey } from '../index.ts';
+import * as bip32 from '../index.ts';
+import { HARDENED_OFFSET, HDKey } from '../index.ts';
 import { deepStrictEqual, throws } from './assert.ts';
 const base58check = createBase58check(sha256);
+type TestHDKey = { _deriveChild(index: number, I?: Uint8Array): HDKey };
+const deriveChildWithI = (key: HDKey, index: number, I: Uint8Array): HDKey =>
+  (key as unknown as TestHDKey)._deriveChild(index, I);
 // https://github.com/cryptocoinjs/hdkey/blob/42637e381bdef0c8f785b14f5b66a80dad969514/test/fixtures/hdkey.json
 const fixtures = [
   {
@@ -557,8 +561,8 @@ describe('hdkey', () => {
         chainCode: parent.chainCode!,
         publicKey: parent.publicKey!,
       });
-      const child = __TESTS.deriveChildWithI(parent, 0, new Uint8Array(64));
-      const publicChild = __TESTS.deriveChildWithI(publicParent, 0, new Uint8Array(64));
+      const child = deriveChildWithI(parent, 0, new Uint8Array(64));
+      const publicChild = deriveChildWithI(publicParent, 0, new Uint8Array(64));
 
       deepStrictEqual(child.privateKey, parent.privateKey);
       deepStrictEqual(child.chainCode, new Uint8Array(32));
@@ -585,8 +589,8 @@ describe('hdkey', () => {
 
       for (const key of [parent, publicParent]) {
         const expected = key.deriveChild(1);
-        const outOfRange = __TESTS.deriveChildWithI(key, 0, withTweak(invalidTweak));
-        const invalidResult = __TESTS.deriveChildWithI(key, 0, withTweak(negativeParent));
+        const outOfRange = deriveChildWithI(key, 0, withTweak(invalidTweak));
+        const invalidResult = deriveChildWithI(key, 0, withTweak(negativeParent));
         deepStrictEqual(outOfRange.index, 1);
         deepStrictEqual(outOfRange.publicExtendedKey, expected.publicExtendedKey);
         deepStrictEqual(invalidResult.index, 1);
@@ -597,10 +601,8 @@ describe('hdkey', () => {
     it('should stop retrying at the last valid private or public index', () => {
       const parent = HDKey.fromMasterSeed(hexToBytes(fixtures[0].seed));
       const publicParent = HDKey.fromExtendedKey(parent.publicExtendedKey);
-      throws(() => __TESTS.deriveChildWithI(parent, 2 ** 32 - 1, withTweak(invalidTweak)));
-      throws(() =>
-        __TESTS.deriveChildWithI(publicParent, HARDENED_OFFSET - 1, withTweak(invalidTweak))
-      );
+      throws(() => deriveChildWithI(parent, 2 ** 32 - 1, withTweak(invalidTweak)));
+      throws(() => deriveChildWithI(publicParent, HARDENED_OFFSET - 1, withTweak(invalidTweak)));
     });
 
     it('should propagate unexpected child-construction errors', () => {
@@ -616,13 +618,28 @@ describe('hdkey', () => {
       });
       let error: unknown;
       try {
-        __TESTS.deriveChildWithI(parent, 0, new Uint8Array(64));
+        deriveChildWithI(parent, 0, new Uint8Array(64));
       } catch (err) {
         error = err;
       }
 
       deepStrictEqual(error === expected, true);
       deepStrictEqual(reads, 1);
+    });
+  });
+  describe('> production child derivation API', () => {
+    it('should not export test hooks or accept caller-controlled HMAC output', () => {
+      deepStrictEqual('__TESTS' in bip32, false);
+      const parent = HDKey.fromMasterSeed(hexToBytes(fixtures[0].seed));
+      const attackerI = new Uint8Array(64);
+      // JavaScript callers can pass extra arguments, but deriveChild must ignore them.
+      const child = (parent.deriveChild as (index: number, I: Uint8Array) => HDKey)(
+        HARDENED_OFFSET,
+        attackerI
+      );
+
+      deepStrictEqual(toHex(child.privateKey!) === toHex(parent.privateKey!), false);
+      deepStrictEqual(toHex(child.chainCode!) === toHex(attackerI.slice(32)), false);
     });
   });
   it('should throw on derive of wrong indexes', () => {
@@ -817,6 +834,28 @@ describe('hdkey', () => {
       privateKey: hdkey.privateKey,
     };
     throws(() => new HDKey(optTooDeep));
+  });
+  it('Should reject invalid BIP32 constructor metadata', () => {
+    const root = HDKey.fromMasterSeed(hexToBytes(fixtures[0].seed));
+    const valid = {
+      versions: root.versions,
+      chainCode: root.chainCode!,
+      depth: 1,
+      parentFingerprint: 0,
+      index: 0,
+      privateKey: root.privateKey!,
+    };
+    const invalidMetadata = [-1, 1.5, Number.NaN, Number.POSITIVE_INFINITY, '1'];
+
+    for (const depth of [...invalidMetadata, 256]) {
+      throws(() => new HDKey({ ...valid, depth } as any));
+    }
+    for (const index of [...invalidMetadata, 2 ** 32]) {
+      throws(() => new HDKey({ ...valid, index } as any));
+    }
+    for (const parentFingerprint of [...invalidMetadata, 2 ** 32]) {
+      throws(() => new HDKey({ ...valid, parentFingerprint } as any));
+    }
   });
   it('Should throw an error when deriving keys of 256 depth', () => {
     const seed = '000102030405060708090a0b0c0d0e0f';

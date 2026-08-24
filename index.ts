@@ -191,20 +191,23 @@ export class HDKey {
     if (!opt || typeof opt !== 'object') {
       throw new Error('HDKey.constructor must not be called directly');
     }
+    const depth = opt.depth ?? 0;
+    const index = opt.index ?? 0;
+    const parentFingerprint = opt.parentFingerprint ?? 0;
+    if (!Number.isSafeInteger(depth) || depth < 0 || depth > MAX_DEPTH) {
+      throw new RangeError('HDKey: depth must be an integer in range 0..255');
+    }
+    toU32(index, 'index');
+    toU32(parentFingerprint, 'parentFingerprint');
+    if (depth === 0 && (index !== 0 || parentFingerprint !== 0)) {
+      throw new Error('HDKey: zero depth with non-zero index/parent fingerprint');
+    }
     this.versions = opt.versions ? validateVersions(opt.versions) : BITCOIN_VERSIONS;
-    this.depth = opt.depth || 0;
+    this.depth = depth;
     if (opt.chainCode) abytes(opt.chainCode, 32);
     this._chainCode = opt.chainCode ? Uint8Array.from(opt.chainCode) : null;
-    this.index = opt.index || 0;
-    this.parentFingerprint = opt.parentFingerprint || 0;
-    if (!this.depth) {
-      if (this.parentFingerprint || this.index) {
-        throw new Error('HDKey: zero depth with non-zero index/parent fingerprint');
-      }
-    }
-    if (this.depth > MAX_DEPTH) {
-      throw new Error('HDKey: depth exceeds the serializable value 255');
-    }
+    this.index = index;
+    this.parentFingerprint = parentFingerprint;
     if (opt.publicKey && opt.privateKey) {
       throw new Error('HDKey: publicKey and privateKey at same time.');
     }
@@ -252,10 +255,12 @@ export class HDKey {
     return child;
   }
 
-  /**
-   * @param _I - Test-only override for the 64-byte HMAC-SHA512 output; normal callers must omit it.
-   */
-  deriveChild(index: number, _I?: Uint8Array): HDKey {
+  deriveChild(index: number): HDKey {
+    return this._deriveChild(index);
+  }
+
+  /** Test-only implementation seam. Production callers must use deriveChild(). */
+  private _deriveChild(index: number, _I?: Uint8Array): HDKey {
     if (!this._publicKey || !this._chainCode) {
       throw new Error('No publicKey or chainCode set');
     }
@@ -367,14 +372,3 @@ export class HDKey {
     );
   }
 }
-
-type Tests = Readonly<{
-  deriveChildWithI(key: TArg<HDKey>, index: number, I: TArg<Uint8Array>): TRet<HDKey>;
-}>;
-
-export const __TESTS: TRet<Tests> = /* @__PURE__ */ Object.freeze({
-  deriveChildWithI(key: TArg<HDKey>, index: number, I: TArg<Uint8Array>): TRet<HDKey> {
-    // Bytes wrappers widen the exported test seam, but deriveChild still needs concrete inputs.
-    return (key as HDKey).deriveChild(index, I as Uint8Array) as TRet<HDKey>;
-  },
-});
