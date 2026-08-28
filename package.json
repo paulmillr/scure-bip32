@@ -8,9 +8,9 @@
     "index.ts"
   ],
   "dependencies": {
-    "@noble/curves": "2.3.0",
-    "@noble/hashes": "2.3.0",
-    "@scure/base": "2.3.0"
+    "@noble/curves": "2.4.0",
+    "@noble/hashes": "2.4.0",
+    "@scure/base": "2.4.0"
   },
   "devDependencies": {
     "@paulmillr/jsbt": "0.7.1",
@@ -19,7 +19,7 @@
     "typescript": "6.0.3"
   },
   "scripts": {
-    "benchmark:size": "npx bismar@0.1 -s",
+    "benchmark:size": "bismar -bsm",
     "build": "tsc",
     "check": "jsbt-check",
     "format": "prettier --write 'index.ts' 'test/*.test.ts'",
