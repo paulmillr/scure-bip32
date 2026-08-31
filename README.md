@@ -67,11 +67,16 @@ For backwards compatibility, `JSON.stringify()` currently serializes both the
 private and public extended keys of an `HDKey`. Treat the result as secret key
 material. A future v3 release will make automatic JSON serialization public-only.
 
+`HARDENED_OFFSET` is a top-level export (`0x80000000`), not a property of `HDKey`:
+
+```ts
+import { HARDENED_OFFSET } from '@scure/bip32';
+```
+
 The full API is:
 
 ```ts
 class HDKey {
-  public static HARDENED_OFFSET: number;
   public static fromMasterSeed(seed: Uint8Array, versions: Versions): HDKey;
   public static fromExtendedKey(base58key: string, versions: Versions): HDKey;
   public static fromJSON(json: { xpriv: string } | { xpub: string }): HDKey;
